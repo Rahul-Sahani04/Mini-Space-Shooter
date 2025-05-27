@@ -90,13 +90,23 @@ export class Enemy {
             gameState.lastComboTime = now;
 
             // Calculate score with combo multiplier
-            const comboMultiplier = Math.min(gameState.comboCount, GAME_CONFIG.COMBO.MAX_MULTIPLIER);
-            const scoreGain = GAME_CONFIG.COMBO.BASE_SCORE * comboMultiplier;
+            let multiplier = 1;
+            if (gameState.comboCount >= 4) {
+                multiplier = 1.5;
+            } else if (gameState.comboCount >= 2) {
+                multiplier = 1.25;
+            }
+            const scoreGain = Math.round(GAME_CONFIG.COMBO.BASE_SCORE * multiplier);
             gameState.score += scoreGain;
+            // Update score UI
+            const scoreElem = document.getElementById('score');
+            if (scoreElem) {
+                scoreElem.textContent = gameState.score;
+            }
 
             // Energy gain with combo bonus
-            const energyGain = GAME_CONFIG.COMBO.ENERGY_GAIN * 
-                             (1 + (comboMultiplier - 1) * 0.2); // 20% bonus per combo level
+            const energyGain = GAME_CONFIG.COMBO.ENERGY_GAIN *
+                                 (1 + (multiplier - 1) * 0.2); // 20% bonus per combo level
             gameState.energy = Math.min(200, gameState.energy + energyGain);
 
             // Create explosion effect

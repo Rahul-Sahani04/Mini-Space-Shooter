@@ -1,12 +1,12 @@
 // Game configuration
 export const GAME_CONFIG = {
     PLAYER: {
-        SIZE: 72,
+        SIZE: 54,
         SPEED: 5,
         DASH_SPEED: 15,
         DASH_DURATION: 20,
-        WIDTH: 72,
-        HEIGHT: 72,
+        WIDTH: 54,
+        HEIGHT: 54,
         DAMAGE: 15, // Player projectile damage
         INITIAL_HEALTH: 100,
         INITIAL_ENERGY: 100,
@@ -15,11 +15,11 @@ export const GAME_CONFIG = {
     },
 
     ENEMY: {
-        SIZE: 68,
+        SIZE: 48,
         MIN_SPEED: 2,
         MAX_SPEED: 4,
-        WIDTH: 68,
-        HEIGHT: 68,
+        WIDTH: 48,
+        HEIGHT: 48,
         HEALTH: 45,
         DAMAGE: 15, // Enemy projectile damage
         SHOOT_CHANCE: 0.01,
