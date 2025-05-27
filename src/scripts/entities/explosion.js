@@ -3,7 +3,6 @@ import { GAME_CONFIG } from '../utils/constants.js';
 export class Explosion {
     constructor(x, y, assetManager, fromPool = false) {
         this.frames = assetManager.getSprite('explosions');
-        console.log('Explosion Frames:', this.frames);
         if (!this.frames || !Array.isArray(this.frames) || this.frames.length === 0) {
             console.error('Explosion sprite frames missing or empty. Using placeholder.');
             // Use a single blank canvas as a fallback

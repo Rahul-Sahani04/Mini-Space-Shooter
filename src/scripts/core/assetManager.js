@@ -270,14 +270,17 @@ export class AssetManager {
             );
         });
 
-        // Load powerup sprite sheets
+        // Load powerup images as individual images
         for (const [type, src] of Object.entries(ASSETS.powerups)) {
             this.loadingPromises.push(
-            this.loadSpriteSheet(`powerup_${type}`, src, 128, 128, 1)
-                .catch(error => {
-                this.errorUI.showError(error, () => this.retryLoadAsset('sprite', `powerup_${type}`, src));
-                return null;
-                })
+                this.loadImage(`powerup_${type}`, src)
+                    .then(img => {
+                        this.assets.sprites.set(`powerup_${type}`, [img]);
+                    })
+                    .catch(error => {
+                        this.errorUI.showError(error, () => this.retryLoadAsset('image', `powerup_${type}`, src));
+                        return null;
+                    })
             );
         }
 
@@ -372,7 +375,6 @@ export class AssetManager {
 
     getSprite(key) {
         const sprite = this.assets.sprites.get(key);
-        console.log(`Fetching sprite: ${key}`, sprite);
         if (!sprite) {
             this.errorUI.showError(new Error(`Sprite not found: ${key}`));
             return null;

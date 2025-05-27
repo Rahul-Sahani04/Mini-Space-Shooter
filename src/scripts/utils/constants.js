@@ -101,8 +101,6 @@ export const ASSETS = {
     },
 };
 
-// Console explosion
-console.log('Explosions assets loaded:', ASSETS.explosions);
 
 // CSS Colors
 export const COLORS = {
