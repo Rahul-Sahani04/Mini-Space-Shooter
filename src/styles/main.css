@@ -1,0 +1,210 @@
+/* Base styles */
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+}
+
+#gameContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+}
+
+#gameCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Parallax background */
+.parallax-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.parallax-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 200%;
+    background-repeat: repeat;
+    animation: scroll linear infinite;
+}
+
+#bgLayer1 {
+    background-image: url('/assets/PixelSpaceRage/PixelBackgroundSeamlessVertically.png');
+    animation-duration: 60s;
+    opacity: 0.5;
+}
+
+#bgLayer2 {
+    background-image: url('/assets/PixelSpaceRage/PixelBackgroundSeamless.png');
+    animation-duration: 45s;
+    opacity: 0.3;
+}
+
+#bgLayer3 {
+    background-image: url('/assets/bg-layer-1.svg');
+    animation-duration: 30s;
+    opacity: 0.2;
+}
+
+@keyframes scroll {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(-50%);
+    }
+}
+
+/* Mobile controls */
+#mobileControls {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    display: none;
+    justify-content: space-around;
+    padding: 0 20px;
+    z-index: 1000;
+}
+
+.mobile-btn {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    backdrop-filter: blur(4px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.mobile-btn:active {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(0.95);
+}
+
+/* Game effects */
+.game-paused {
+    filter: blur(3px) brightness(0.7);
+}
+
+.game-over-effect {
+    animation: game-over 0.5s forwards;
+}
+
+@keyframes game-over {
+    to {
+        filter: brightness(0.3) blur(2px);
+    }
+}
+
+/* Achievements */
+.achievement-notification {
+    position: fixed;
+    top: 20px;
+    right: -300px;
+    width: 280px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #4338ca;
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: transform 0.5s ease-in-out;
+    z-index: 2000;
+    backdrop-filter: blur(4px);
+}
+
+.achievement-notification.show {
+    transform: translateX(-320px);
+}
+
+/* Error messages */
+.error-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(220, 38, 38, 0.9);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    z-index: 3000;
+}
+
+.error-message button {
+    margin-top: 10px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+}
+
+/* Loading progress */
+#loadingProgress {
+    transition: width 0.3s ease-out;
+}
+
+/* Combat effects */
+.damage-number {
+    position: absolute;
+    color: #ef4444;
+    font-weight: bold;
+    pointer-events: none;
+    animation: float-up 0.8s ease-out forwards;
+}
+
+@keyframes float-up {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+}
+
+/* Modals */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    background: rgba(0, 0, 0, 0.9);
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 90%;
+    color: white;
+}

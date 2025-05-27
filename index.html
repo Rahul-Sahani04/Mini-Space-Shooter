@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stellar Conflict | Space Shooter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/src/styles/main.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png">
 </head>
-
 <body class="text-white">
     <div id="gameContainer">
         <!-- Parallax Background Layers -->
@@ -21,9 +21,6 @@
 
         <!-- Game Canvas -->
         <canvas id="gameCanvas"></canvas>
-
-        <!-- Player Ship -->
-        <div id="player"></div>
 
         <!-- UI Elements -->
         <div class="absolute top-4 left-4 z-50 flex flex-col space-y-2">
@@ -66,20 +63,20 @@
             </div>
         </div>
 
-        <!-- Game Menu -->
-        <div id="mainMenu"
-            class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80">
-            <h1
-                class="text-5xl md:text-6xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+        <!-- Main Menu -->
+        <div id="mainMenu" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80 hidden">
+            <h1 class="text-5xl md:text-6xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
                 STELLAR CONFLICT</h1>
             <div class="flex flex-col space-y-4 w-64">
-                <button id="startGame"
-                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-lg transition-all transform hover:scale-105">START
-                    MISSION</button>
-                <button
-                    class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold text-lg transition-all transform hover:scale-105">CONTROLS</button>
-                <button
-                    class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold text-lg transition-all transform hover:scale-105">ABOUT</button>
+                <button id="startGame" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-lg transition-all transform hover:scale-105">
+                    START MISSION
+                </button>
+                <button id="controlsButton" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold text-lg transition-all transform hover:scale-105">
+                    CONTROLS
+                </button>
+                <button id="aboutButton" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold text-lg transition-all transform hover:scale-105">
+                    ABOUT
+                </button>
             </div>
             <div class="mt-8 text-gray-400">
                 <p>Use arrow keys to move, SPACE to fire, SHIFT to dash</p>
@@ -87,33 +84,39 @@
         </div>
 
         <!-- Game Over Screen -->
-        <div id="gameOver"
-            class="absolute inset-0 z-50 flex-col items-center justify-center bg-black bg-opacity-80 hidden">
+        <div id="gameOver" class="absolute inset-0 z-50 flex-col items-center justify-center bg-black bg-opacity-80 hidden">
             <h1 class="text-5xl font-bold mb-4 text-red-500">MISSION FAILED</h1>
             <div class="text-2xl mb-8">Final Score: <span id="finalScore">0</span></div>
-            <button id="restartGame"
-                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-lg transition-all transform hover:scale-105">TRY
-                AGAIN</button>
+            <div class="flex space-x-4">
+                <button id="restartGame" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-lg transition-all transform hover:scale-105">
+                    TRY AGAIN
+                </button>
+                <button id="returnToMenu" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold text-lg transition-all transform hover:scale-105">
+                    MENU
+                </button>
+            </div>
         </div>
 
         <!-- Mobile Controls -->
-        <div id="mobileControls">
+        <div id="mobileControls" class="hidden">
             <div class="mobile-btn" id="leftBtn"><i class="fas fa-arrow-left"></i></div>
-            <div class="mobile-btn" id="fireBtn"><i class="fas fa-fire"></i></div>
             <div class="mobile-btn" id="rightBtn"><i class="fas fa-arrow-right"></i></div>
             <div class="mobile-btn" id="upBtn"><i class="fas fa-arrow-up"></i></div>
             <div class="mobile-btn" id="downBtn"><i class="fas fa-arrow-down"></i></div>
+            <div class="mobile-btn" id="fireBtn"><i class="fas fa-fire"></i></div>
+            <div class="mobile-btn" id="dashBtn"><i class="fas fa-bolt"></i></div>
         </div>
     </div>
 
-    <audio id="laserSound" src="assets/laserSound.wav"></audio>
-    <audio id="explosionSound" src="assets/explosionSound.wav"></audio>
-    <audio id="powerupSound" src="assets/powerupSound.wav"></audio>
-    <audio id="startMissionSound" src="assets/Space Music Pack/fx/start-level.wav"></audio>
-    <audio id="bgMusic" loop src="assets/Space Music Pack/battle.wav"></audio>
-    <audio id="bgMenuMusic" loop src="assets/Space Music Pack/menu.wav"></audio>
+    <!-- Audio Elements -->
+    <audio id="laserSound" src="/assets/laserSound.wav"></audio>
+    <audio id="explosionSound" src="/assets/explosionSound.wav"></audio>
+    <audio id="powerupSound" src="/assets/powerupSound.wav"></audio>
+    <audio id="startMissionSound" src="/assets/SpaceMusicPack/fx/startLevel.wav"></audio>
+    <audio id="bgMusic" loop src="/assets/SpaceMusicPack/battle.wav"></audio>
+    <audio id="bgMenuMusic" loop src="/assets/SpaceMusicPack/menu.wav"></audio>
 
-    <script src="game.js"></script>
+    <!-- Main Script -->
+    <script type="module" src="/src/scripts/index.js"></script>
 </body>
-
 </html>

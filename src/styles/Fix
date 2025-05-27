@@ -1,0 +1,8 @@
+Failed to load url /src/scripts/index.js (resolved id: /src/scripts/index.js). Does the file exist? (x3)
+
+main.css:1                         
+           Failed to load resource: the server responded with a status of 404 (Not Found)
+
+
+index.js:1 
+           Failed to load resource: the server responded with a status of 404 (Not Found)
