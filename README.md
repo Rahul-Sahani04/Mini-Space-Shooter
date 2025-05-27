@@ -32,10 +32,23 @@ https://github.com/user-attachments/assets/ff61159e-dfe2-4fed-a5a3-4ebb70311995
 - **Mobile**: Touch controls appear automatically on mobile devices
 
 ### Gameplay Tips
-1. Manage your energy - each shot consumes energy that regenerates over time
-2. Avoid enemy projectiles while maintaining offensive pressure
-3. Watch for power-ups to restore health and shields
-4. Try to achieve the highest score by destroying enemy ships
+1. **Energy Management**:
+   - Each shot consumes 10 energy points
+   - Energy regenerates slowly over time
+   - Destroy enemies to instantly gain 20 energy points
+   - Look for ammo power-ups to restore 100 energy points
+
+2. **Power-up System**:
+   - Health (Green): Restores 30 HP
+   - Shield (Blue): Adds 50 HP, can exceed 100 HP
+   - Ammo (Yellow): Instantly restores 100 energy points
+   - Enemies have a 30% chance to drop power-ups when destroyed
+
+3. **Combat Strategy**:
+   - Use dash (Shift key) to dodge enemy projectiles
+   - Maintain offensive pressure to keep energy high through kills
+   - Collect power-ups strategically based on your current needs
+   - Try to achieve the highest score by destroying enemy ships
 
 ## 🛠️ Technical Details
 
@@ -83,11 +96,12 @@ The game supports easy addition of new enemy types by:
 
 ### Modifying Gameplay
 You can customize various aspects:
-- Enemy spawn rates
-- Player ship capabilities
-- Weapon systems
-- Power-up effects
-- Difficulty progression
+- Enemy spawn rates and patterns
+- Player ship capabilities (speed, health, energy)
+- Weapon systems (damage, energy cost)
+- Power-up effects and drop rates
+- Dash mechanics (speed, cooldown)
+- Difficulty progression and scoring
 
 ## 🤝 Contributing
 
@@ -110,5 +124,36 @@ For support, email support@stellarconflict.com or open an issue in the GitHub re
 ## 🌟 Credits
 
 - Game assets from [PixelSpaceRage](https://example.com)
-- Sound effects created using [Tool Name]
+- Sound effects from Space Music Pack
 - Special thanks to all contributors!
+
+## 🎯 Future Improvements
+Some potential enhancements that could be added:
+
+1. **Gameplay Mechanics**:
+   - Different weapon types with unique energy costs and effects
+   - Boss battles with special attack patterns
+   - Shield system separate from health
+   - Combo system for chain-killing enemies
+   - Score multipliers for skillful play
+
+2. **Visual and Audio**:
+   - More varied enemy death animations
+   - Particle effects for power-up collection
+   - Screen shake for impactful moments
+   - Additional background music tracks
+   - Dynamic difficulty indicators
+
+3. **Technical Improvements**:
+   - High score leaderboard system
+   - Save game progress
+   - More mobile-friendly controls
+   - Performance optimizations for projectile rendering
+   - Additional enemy movement patterns
+
+4. **Polish**:
+   - Tutorial system for new players
+   - Achievement system
+   - More varied backgrounds
+   - Power-up collection animations
+   - Hit feedback effects
