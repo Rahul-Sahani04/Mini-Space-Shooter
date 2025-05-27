@@ -51,6 +51,7 @@ let gameState = {
     projectiles: [],
     enemies: [],
     powerups: [],
+    explosions: [],
     lastSpawnTime: 0,
     spawnInterval: 2000,
     animationFrame: 0
@@ -196,6 +197,44 @@ class Enemy {
     }
 }
 
+// Explosion class
+class Explosion {
+    constructor(x, y, assets) {
+        this.x = x;
+        this.y = y;
+        this.width = 128;
+        this.height = 128;
+        this.frames = assets.explosions;
+        this.currentFrame = 0;
+        this.frameDelay = 3;
+        this.frameTimer = 0;
+        this.isComplete = false;
+    }
+
+    update() {
+        this.frameTimer++;
+        if (this.frameTimer >= this.frameDelay) {
+            this.currentFrame++;
+            if (this.currentFrame >= this.frames.length) {
+                this.isComplete = true;
+            }
+            this.frameTimer = 0;
+        }
+    }
+
+    draw(ctx) {
+        if (!this.isComplete && this.frames[this.currentFrame]) {
+            ctx.drawImage(
+                this.frames[this.currentFrame],
+                this.x - this.width / 2,
+                this.y - this.height / 2,
+                this.width,
+                this.height
+            );
+        }
+    }
+}
+
 // Projectile class
 class Projectile {
     constructor(x, y, type) {
@@ -266,6 +305,16 @@ async function initGame() {
 
 // Main game loop
 function gameLoop() {
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Continue updating explosions even after game over
+    gameState.explosions = gameState.explosions.filter(explosion => {
+        explosion.update();
+        explosion.draw(ctx);
+        return !explosion.isComplete;
+    });
+
     if (!gameState.isGameOver) {
         // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -279,6 +328,13 @@ function gameLoop() {
         // Update and draw player
         player.update();
         player.draw(ctx);
+
+        // Update and draw explosions
+        gameState.explosions = gameState.explosions.filter(explosion => {
+            explosion.update();
+            explosion.draw(ctx);
+            return !explosion.isComplete;
+        });
         
         // Update and draw enemies
         gameState.enemies = gameState.enemies.filter(enemy => {
@@ -303,6 +359,7 @@ function gameLoop() {
                     if (checkCollision(projectile, enemy)) {
                         enemy.health -= 25; // Each hit does 25 damage
                         if (enemy.health <= 0) {
+                            gameState.explosions.push(new Explosion(enemy.x, enemy.y, loadedAssets));
                             gameState.enemies.splice(i, 1);
                             gameState.score += 100;
                             document.getElementById('score').textContent = gameState.score;
@@ -324,6 +381,7 @@ function gameLoop() {
                 document.getElementById('explosionSound').play();
                 
                 if (gameState.health <= 0) {
+                    gameState.explosions.push(new Explosion(player.x, player.y, loadedAssets));
                     gameOver();
                 }
                 return false; // Remove projectile after hit
@@ -341,8 +399,14 @@ function gameLoop() {
 }
 
 // Game over handling
-function gameOver() {
+async function gameOver() {
+    // Set game over state but don't show screen yet
     gameState.isGameOver = true;
+    
+    // Wait for explosion animation to complete (about 1 second)
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Show game over screen
     document.getElementById('gameOver').style.display = 'flex';
     document.getElementById('finalScore').textContent = gameState.score;
 }
@@ -365,6 +429,7 @@ document.getElementById('restartGame').addEventListener('click', () => {
         projectiles: [],
         enemies: [],
         powerups: [],
+        explosions: [],
         lastSpawnTime: 0,
         spawnInterval: 2000,
         animationFrame: 0
