@@ -47,14 +47,14 @@ export class Enemy {
         this.y = Math.max(-this.height, Math.min(this.y, canvas.height));
 
         // Ensure frames are valid
-        // if (!this.frames || !Array.isArray(this.frames) || this.frames.length === 0) return;
+        if (!this.frames || !Array.isArray(this.frames) || this.frames.length === 0) return;
 
         // Update animation
-        // this.frameTimer++;
-        // if (this.frameTimer >= this.frameDelay) {
-        //     this.currentFrame = (this.currentFrame + 1) % this.frameCount;
-        //     this.frameTimer = 0;
-        // }
+        this.frameTimer++;
+        if (this.frameTimer >= this.frameDelay) {
+            this.currentFrame = (this.currentFrame + 1) % this.frameCount;
+            this.frameTimer = 0;
+        }
 
         // Random shooting
         if (Math.random() < GAME_CONFIG.ENEMY.SHOOT_CHANCE) {

@@ -81,14 +81,14 @@ export class Player {
         this.y = Math.max(0, Math.min(this.y, canvas.height - this.height));
 
         // Ensure frames are valid
-        // if (!this.frames || !Array.isArray(this.frames) || this.frames.length === 0) return;
+        if (!this.frames || !Array.isArray(this.frames) || this.frames.length === 0) return;
 
-        // // Update animation
-        // this.frameTimer++;
-        // if (this.frameTimer >= this.frameDelay) {
-        //     this.currentFrame = (this.currentFrame + 1) % this.frameCount;
-        //     this.frameTimer = 0;
-        // }
+        // Update animation
+        this.frameTimer++;
+        if (this.frameTimer >= this.frameDelay) {
+            this.currentFrame = (this.currentFrame + 1) % this.frameCount;
+            this.frameTimer = 0;
+        }
     }
 
     shoot(gameState, game) {

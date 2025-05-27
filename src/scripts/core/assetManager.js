@@ -218,23 +218,45 @@ export class AssetManager {
         }
 
         // Load player sprite sheets
-        this.loadingPromises.push(
-            this.loadSpriteSheet('playerBlue', ASSETS.player.blue[0], 128, 128, 3)
-                .catch(error => {
-                    this.errorUI.showError(error, () => this.retryLoadAsset('sprite', 'playerBlue', ASSETS.player.blue[0]));
-                    return null;
-                })
-        );
-
-        // Load enemy sprite sheets
-        for (const [type, frames] of Object.entries(ASSETS.enemies)) {
+        // Load player frames as individual images
+        const playerBlueFrames = [];
+        ASSETS.player.blue.forEach((src, idx) => {
             this.loadingPromises.push(
-                this.loadSpriteSheet(`enemy${type}`, frames[0], 128, 128, 3)
+                this.loadImage(`playerBlue_${idx + 1}`, src)
+                    .then(img => { playerBlueFrames[idx] = img; })
                     .catch(error => {
-                        this.errorUI.showError(error, () => this.retryLoadAsset('sprite', `enemy${type}`, frames[0]));
+                        this.errorUI.showError(error, () => this.retryLoadAsset('image', `playerBlue_${idx + 1}`, src));
                         return null;
                     })
             );
+        });
+        // After all frames loaded, store in sprites
+        Promise.all(this.loadingPromises).then(() => {
+            if (playerBlueFrames.length > 0) {
+                this.assets.sprites.set('playerBlue', playerBlueFrames);
+            }
+        });
+
+        // Load enemy sprite sheets
+        // Load enemy frames as individual images
+        for (const [type, frames] of Object.entries(ASSETS.enemies)) {
+            const enemyFrames = [];
+            frames.forEach((src, idx) => {
+                this.loadingPromises.push(
+                    this.loadImage(`enemy${type}_${idx + 1}`, src)
+                        .then(img => { enemyFrames[idx] = img; })
+                        .catch(error => {
+                            this.errorUI.showError(error, () => this.retryLoadAsset('image', `enemy${type}_${idx + 1}`, src));
+                            return null;
+                        })
+                );
+            });
+            // After all frames loaded, store in sprites
+            Promise.all(this.loadingPromises).then(() => {
+                if (enemyFrames.length > 0) {
+                    this.assets.sprites.set(`enemy${type}`, enemyFrames);
+                }
+            });
         }
 
         // Load explosion frames as individual images
