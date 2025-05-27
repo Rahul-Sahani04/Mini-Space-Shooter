@@ -7,7 +7,11 @@
 
 A fast-paced, retro-styled space shooter game built with vanilla JavaScript and modern web technologies. Battle through waves of enemies, collect power-ups, and achieve the highest score in this exciting arcade experience.
 
-![Stellar Conflict Gameplay MP4](previews/gameplay.mp4)
+
+
+https://github.com/user-attachments/assets/ff61159e-dfe2-4fed-a5a3-4ebb70311995
+
+
 
 ## 🎮 Features
 
