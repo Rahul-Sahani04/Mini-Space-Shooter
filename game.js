@@ -382,8 +382,35 @@ class Projectile {
     }
 
     draw(ctx) {
-        ctx.fillStyle = this.type === 'player' ? '#00ff00' : '#ff0000';
-        ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+        // ctx.fillStyle = this.type === 'player' ? '#00ff00' : '#ff0000';
+        // ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+
+        // Draw projectile image based on type
+        const imgSrc = this.type === 'player' ? ASSETS.projectiles.laser : ASSETS.projectiles.plasma;
+        const img = new Image();
+
+
+        img.src = imgSrc;
+        ctx.drawImage(
+            img,
+            this.x - this.width / 2,
+            this.y - this.height / 2,
+            this.width,
+            this.height
+        );
+        img.onload = () => {
+            ctx.drawImage(
+                img,
+                this.x - this.width / 2,
+                this.y - this.height / 2,
+                this.width,
+                this.height
+            );
+        };
+        img.onerror = () => {
+            console.error(`Failed to load projectile image: ${imgSrc}`);
+        };
+        ctx.globalAlpha = 1; // Reset alpha after drawing
     }
 }
 
