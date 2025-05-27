@@ -1,0 +1,160 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
+body {
+    font-family: 'Orbitron', sans-serif;
+    overflow: hidden;
+    background-color: #0a0a20;
+    touch-action: none;
+}
+
+#gameCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+#gameContainer {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Parallax Background Styles */
+.parallax-layer {
+    position: absolute;
+    width: 200%;
+    height: 100%;
+    background-repeat: repeat-x;
+    will-change: transform;
+    transform-origin: 0 0;
+    backface-visibility: hidden;
+}
+
+#bgLayer1 {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1000" viewBox="0 0 2000 1000"><rect width="100%" height="100%" fill="%230a0a20"/><g fill="white"><circle cx="100" cy="150" r="2"/><circle cx="300" cy="400" r="1"/><circle cx="500" cy="100" r="1"/><circle cx="700" cy="300" r="2"/><circle cx="900" cy="50" r="1"/><circle cx="1100" cy="350" r="2"/><circle cx="1300" cy="200" r="1"/><circle cx="1500" cy="450" r="2"/><circle cx="1700" cy="80" r="1"/><circle cx="1900" cy="320" r="2"/></g></svg>');
+    z-index: 1;
+}
+
+#bgLayer2 {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1000" viewBox="0 0 2000 1000"><g fill="%23aaa" opacity="0.5"><circle cx="50" cy="250" r="2"/><circle cx="250" cy="500" r="1"/><circle cx="450" cy="200" r="1"/><circle cx="650" cy="400" r="2"/><circle cx="850" cy="150" r="1"/><circle cx="1050" cy="450" r="2"/><circle cx="1250" cy="300" r="1"/><circle cx="1450" cy="550" r="2"/><circle cx="1650" cy="180" r="1"/><circle cx="1850" cy="420" r="2"/></g></svg>');
+    z-index: 2;
+}
+
+#bgLayer3 {
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1000" viewBox="0 0 2000 1000"><g fill="%23555" opacity="0.3"><circle cx="150" cy="350" r="3"/><circle cx="350" cy="600" r="2"/><circle cx="550" cy="300" r="2"/><circle cx="750" cy="500" r="3"/><circle cx="950" cy="250" r="2"/><circle cx="1150" cy="550" r="3"/><circle cx="1350" cy="400" r="2"/><circle cx="1550" cy="650" r="3"/><circle cx="1750" cy="280" r="2"/><circle cx="1950" cy="520" r="3"/></g></svg>');
+    z-index: 3;
+}
+
+.explosion {
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="yellow"/><circle cx="32" cy="32" r="24" fill="orange"/><circle cx="32" cy="32" r="16" fill="red"/></svg>');
+    background-size: contain;
+    animation: explode 0.5s steps(8) forwards;
+}
+
+@keyframes explode {
+    0% {
+        transform: scale(0.1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+.laser {
+    position: absolute;
+    width: 8px;
+    height: 24px;
+    background: orange;
+    border-radius: 2px;
+    box-shadow: 0 0 8px orange;
+}
+
+.enemy-laser {
+    background: red;
+    box-shadow: 0 0 8px red;
+}
+
+.powerup {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="%2300ff99"/><polygon points="16,6 20,14 28,14 22,20 24,28 16,24 8,28 10,20 4,14 12,14" fill="%23006633"/></svg>');
+    background-size: contain;
+    animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    100% {
+        transform: scale(1.2);
+    }
+}
+
+#mobileControls {
+    position: fixed;
+    bottom: 20px;
+    width: 100%;
+    display: none;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 100;
+}
+
+.mobile-btn {
+    width: 60px;
+    height: 60px;
+    background-color: rgba(0, 102, 255, 0.3);
+    border: 2px solid #0066ff;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 24px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+.mobile-btn:active {
+    background-color: rgba(0, 102, 255, 0.6);
+}
+
+#player {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 30px solid transparent;
+    border-right: 30px solid transparent;
+    border-bottom: 50px solid #00aaff;
+    z-index: 10;
+}
+
+#player::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: -20px;
+    width: 0;
+    height: 0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 30px solid #0066ff;
+}
+
+@media (max-width: 768px) {
+    #mobileControls {
+        display: flex;
+    }
+}

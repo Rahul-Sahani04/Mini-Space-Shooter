@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellar Conflict | Space Shooter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="text-white">
+    <div id="gameContainer">
+        <!-- Parallax Background Layers -->
+        <div class="parallax-background" role="presentation" aria-hidden="true">
+            <div class="parallax-layer" id="bgLayer1" aria-hidden="true"></div>
+            <div class="parallax-layer" id="bgLayer2" aria-hidden="true"></div>
+            <div class="parallax-layer" id="bgLayer3" aria-hidden="true"></div>
+        </div>
+
+        <!-- Game Canvas -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Player Ship -->
+        <div id="player"></div>
+
+        <!-- UI Elements -->
+        <div class="absolute top-4 left-4 z-50 flex flex-col space-y-2">
+            <div class="flex items-center">
+                <div class="w-32 h-4 bg-gray-800 rounded-full overflow-hidden">
+                    <div id="healthBar" class="h-full bg-green-500 rounded-full"
+                        style="width: 100%; transition: width 0.3s;"></div>
+                </div>
+                <span class="ml-2 text-sm font-bold">SHIELD</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-32 h-4 bg-gray-800 rounded-full overflow-hidden">
+                    <div id="energyBar" class="h-full bg-blue-500 rounded-full"
+                        style="width: 100%; transition: width 0.3s;"></div>
+                </div>
+                <span class="ml-2 text-sm font-bold">ENERGY</span>
+            </div>
+        </div>
+
+        <div class="absolute top-4 right-4 z-50 text-right">
+            <div class="text-2xl font-bold" id="score">0</div>
+            <div class="text-sm">SCORE</div>
+        </div>
+
+        <!-- Game Menu -->
+        <div id="mainMenu"
+            class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80">
+            <h1
+                class="text-5xl md:text-6xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+                STELLAR CONFLICT</h1>
+            <div class="flex flex-col space-y-4 w-64">
+                <button id="startGame"
+                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-lg transition-all transform hover:scale-105">START
+                    MISSION</button>
+                <button
+                    class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold text-lg transition-all transform hover:scale-105">CONTROLS</button>
+                <button
+                    class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold text-lg transition-all transform hover:scale-105">ABOUT</button>
+            </div>
+            <div class="mt-8 text-gray-400">
+                <p>Use arrow keys to move, SPACE to fire</p>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOver"
+            class="absolute inset-0 z-50 flex-col items-center justify-center bg-black bg-opacity-80 hidden">
+            <h1 class="text-5xl font-bold mb-4 text-red-500">MISSION FAILED</h1>
+            <div class="text-2xl mb-8">Final Score: <span id="finalScore">0</span></div>
+            <button id="restartGame"
+                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-lg transition-all transform hover:scale-105">TRY
+                AGAIN</button>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div id="mobileControls">
+            <div class="mobile-btn" id="leftBtn"><i class="fas fa-arrow-left"></i></div>
+            <div class="mobile-btn" id="fireBtn"><i class="fas fa-fire"></i></div>
+            <div class="mobile-btn" id="rightBtn"><i class="fas fa-arrow-right"></i></div>
+            <div class="mobile-btn" id="upBtn"><i class="fas fa-arrow-up"></i></div>
+            <div class="mobile-btn" id="downBtn"><i class="fas fa-arrow-down"></i></div>
+        </div>
+    </div>
+
+    <audio id="laserSound" src="assets/laserSound.wav"></audio>
+    <audio id="explosionSound" src="assets/explosionSound.wav"></audio>
+    <audio id="powerupSound" src="assets/powerupSound.wav"></audio>
+    <audio id="startMissionSound" src="assets/Space Music Pack/fx/start-level.wav"></audio>
+    <audio id="bgMusic" loop src="assets/Space Music Pack/battle.wav"></audio>
+    <audio id="bgMenuMusic" loop src="assets/Space Music Pack/menu.wav"></audio>
+
+    <script src="game.js"></script>
+</body>
+
+</html>
