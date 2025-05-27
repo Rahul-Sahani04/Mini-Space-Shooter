@@ -54,7 +54,9 @@ let gameState = {
     explosions: [],
     lastSpawnTime: 0,
     spawnInterval: 2000,
-    animationFrame: 0
+    animationFrame: 0,
+    dashCooldown: 0,
+    maxDashCooldown: 100
 };
 
 // Initialize canvas
@@ -108,6 +110,12 @@ class Player {
         this.width = 64;
         this.height = 64;
         this.speed = 5;
+        this.dashSpeed = 15;
+        this.isDashing = false;
+        this.currentSpeed = this.speed;
+        this.dashDuration = 20; // Duration of dash in frames
+        this.dashTimer = 0;
+        this.dashTrail = []; // Store previous positions for trail effect
         this.frames = assets.player.blue;
         this.currentFrame = 0;
         this.frameCount = this.frames.length;
@@ -116,11 +124,44 @@ class Player {
     }
 
     update() {
-        // Handle keyboard input
-        if (keys.ArrowLeft && this.x > 0) this.x -= this.speed;
-        if (keys.ArrowRight && this.x < canvas.width - this.width) this.x += this.speed;
-        if (keys.ArrowUp && this.y > 0) this.y -= this.speed;
-        if (keys.ArrowDown && this.y < canvas.height - this.height) this.y += this.speed;
+        // Store previous position for trail
+        if (this.isDashing) {
+            this.dashTrail.push({x: this.x, y: this.y});
+            if (this.dashTrail.length > 5) {
+                this.dashTrail.shift();
+            }
+        } else {
+            this.dashTrail = [];
+        }
+
+        // Handle dash
+        if (keys.ShiftLeft && gameState.dashCooldown === 0 && !this.isDashing) {
+            this.isDashing = true;
+            this.dashTimer = this.dashDuration;
+            gameState.dashCooldown = gameState.maxDashCooldown;
+        }
+
+        // Update dash state
+        if (this.isDashing) {
+            this.currentSpeed = this.speed + (this.dashSpeed - this.speed) * (this.dashTimer / this.dashDuration);
+            this.dashTimer--;
+            if (this.dashTimer <= 0) {
+                this.isDashing = false;
+            }
+        } else {
+            this.currentSpeed = this.speed;
+        }
+
+        // Update dash cooldown
+        if (gameState.dashCooldown > 0) {
+            gameState.dashCooldown--;
+        }
+
+        // Update movement with current speed
+        if (keys.ArrowLeft && this.x > 0) this.x -= this.currentSpeed;
+        if (keys.ArrowRight && this.x < canvas.width - this.width) this.x += this.currentSpeed;
+        if (keys.ArrowUp && this.y > 0) this.y -= this.currentSpeed;
+        if (keys.ArrowDown && this.y < canvas.height - this.height) this.y += this.currentSpeed;
 
         // Animation
         this.frameTimer++;
@@ -131,6 +172,24 @@ class Player {
     }
 
     draw(ctx) {
+        // Draw dash trail
+        if (this.isDashing) {
+            ctx.globalAlpha = 0.3;
+            this.dashTrail.forEach((pos, i) => {
+                const alpha = i / this.dashTrail.length;
+                ctx.globalAlpha = alpha * 0.3;
+                ctx.drawImage(
+                    this.frames[this.currentFrame],
+                    pos.x - this.width / 2,
+                    pos.y - this.height / 2,
+                    this.width,
+                    this.height
+                );
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        // Draw player
         ctx.drawImage(
             this.frames[this.currentFrame],
             this.x - this.width / 2,
@@ -393,6 +452,10 @@ function gameLoop() {
         // Energy regeneration
         gameState.energy = Math.min(200, gameState.energy + 0.2);
         document.getElementById('energyBar').style.width = `${gameState.energy}%`;
+
+        // Update dash cooldown bar
+        const dashCooldownPercent = ((gameState.maxDashCooldown - gameState.dashCooldown) / gameState.maxDashCooldown) * 100;
+        document.getElementById('dashCooldownBar').style.width = `${dashCooldownPercent}%`;
         
         requestAnimationFrame(gameLoop);
     }
@@ -432,10 +495,13 @@ document.getElementById('restartGame').addEventListener('click', () => {
         explosions: [],
         lastSpawnTime: 0,
         spawnInterval: 2000,
-        animationFrame: 0
+        animationFrame: 0,
+        dashCooldown: 0,
+        maxDashCooldown: 100
     };
     document.getElementById('score').textContent = '0';
     document.getElementById('healthBar').style.width = '100%';
     document.getElementById('energyBar').style.width = '100%';
+    document.getElementById('dashCooldownBar').style.width = '100%';
     initGame();
 });
