@@ -366,6 +366,58 @@ class Explosion {
     }
 }
 
+// PowerUp class
+class PowerUp {
+    constructor(x, y, type, assets) {
+        this.x = x;
+        this.y = y;
+        this.width = 32;
+        this.height = 32;
+        this.type = type;
+        this.speed = 1;
+        
+        if (assets && assets.powerups && assets.powerups[type]) {
+            this.sprite = assets.powerups[type];
+        } else {
+            console.error('PowerUp assets not properly loaded:', { assets, type });
+            throw new Error('PowerUp assets missing');
+        }
+    }
+
+    update() {
+        this.y += this.speed;
+    }
+
+    draw(ctx) {
+        ctx.drawImage(
+            this.sprite,
+            this.x - this.width / 2,
+            this.y - this.height / 2,
+            this.width,
+            this.height
+        );
+    }
+
+    applyEffect() {
+        switch(this.type) {
+            case 'health':
+                gameState.health = Math.min(100, gameState.health + 30);
+                document.getElementById('healthBar').style.width = `${gameState.health}%`;
+                break;
+            case 'shield':
+                gameState.health = Math.min(150, gameState.health + 50);
+                document.getElementById('healthBar').style.width = `${gameState.health}%`;
+                break;
+            case 'ammo':
+                gameState.energy = Math.min(200, gameState.energy + 100);
+                document.getElementById('energyBar').style.width = `${gameState.energy}%`;
+                break;
+        }
+        document.getElementById('powerupSound').volume = 0.5;
+        document.getElementById('powerupSound').play();
+    }
+}
+
 // Projectile class
 class Projectile {
     constructor(x, y, type) {
@@ -491,6 +543,20 @@ function gameLoop(assets) {
     if (!gameState.isGameOver) {
         // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Update and draw powerups
+        gameState.powerups = gameState.powerups.filter(powerup => {
+            powerup.update();
+            powerup.draw(ctx);
+
+            // Check collision with player
+            if (checkCollision(powerup, player)) {
+                powerup.applyEffect();
+                return false; // Remove collected powerup
+            }
+
+            return powerup.y < canvas.height + 32; // Remove if off screen
+        });
         
         // Spawn enemies
         if (Date.now() - gameState.lastSpawnTime > gameState.spawnInterval) {
@@ -534,8 +600,18 @@ function gameLoop(assets) {
                         if (enemy.health <= 0) {
                             gameState.explosions.push(new Explosion(enemy.x, enemy.y, assets));
                             gameState.enemies.splice(i, 1);
+                            // Add score and recharge energy when enemy is destroyed
                             gameState.score += 100;
                             document.getElementById('score').textContent = gameState.score;
+                            gameState.energy = Math.min(200, gameState.energy + 20);
+                            document.getElementById('energyBar').style.width = `${gameState.energy}%`;
+
+                            // Chance to drop power-up
+                            if (Math.random() < 0.3) { // 30% chance to drop power-up
+                                const powerUpTypes = ['health', 'shield', 'ammo'];
+                                const randomType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
+                                gameState.powerups.push(new PowerUp(enemy.x, enemy.y, randomType, assets));
+                            }
 
                             document.getElementById('explosionSound').volume = 0.5;
                             document.getElementById('explosionSound').play();
