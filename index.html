@@ -55,6 +55,17 @@
             <div class="text-sm">SCORE</div>
         </div>
 
+        <!-- Loading Screen -->
+        <div id="loadingScreen" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black">
+            <h1 class="text-4xl font-bold mb-8 text-blue-400">LOADING...</h1>
+            <div class="w-64 h-4 bg-gray-800 rounded-full overflow-hidden">
+                <div id="loadingProgress" class="h-full bg-blue-500 rounded-full" style="width: 0%; transition: width 0.3s;"></div>
+            </div>
+            <div class="mt-4 text-gray-400">
+                <span id="loadingText">Loading assets...</span>
+            </div>
+        </div>
+
         <!-- Game Menu -->
         <div id="mainMenu"
             class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80">

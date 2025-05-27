@@ -83,19 +83,67 @@ function loadImage(src) {
 // Preload all assets
 async function preloadAssets() {
     const loadedAssets = {};
+    const loadingProgress = document.getElementById('loadingProgress');
+    const loadingText = document.getElementById('loadingText');
     
+    // Count total assets to load
+    let totalAssets = 0;
+    let loadedCount = 0;
+    
+    // First count total assets
+    const assetsList = [];
     for (const [key, value] of Object.entries(ASSETS)) {
         if (Array.isArray(value)) {
-            loadedAssets[key] = await Promise.all(value.map(loadImage));
+            totalAssets += value.length;
+            value.forEach(path => assetsList.push({ key, path }));
         } else if (typeof value === 'object') {
-            loadedAssets[key] = {};
             for (const [subKey, paths] of Object.entries(value)) {
-                loadedAssets[key][subKey] = await Promise.all(
-                    Array.isArray(paths) ? paths.map(loadImage) : [loadImage(paths)]
-                );
+                if (Array.isArray(paths)) {
+                    totalAssets += paths.length;
+                    paths.forEach(path => assetsList.push({ key, subKey, path }));
+                } else {
+                    totalAssets++;
+                    assetsList.push({ key, subKey, path: paths });
+                }
             }
         } else {
-            loadedAssets[key] = await loadImage(value);
+            totalAssets++;
+            assetsList.push({ key, path: value });
+        }
+    }
+    
+    // Function to update loading progress
+    const updateProgress = () => {
+        loadedCount++;
+        const progress = (loadedCount / totalAssets) * 100;
+        loadingProgress.style.width = `${progress}%`;
+        loadingText.textContent = `Loading assets... ${Math.round(progress)}%`;
+    };
+    
+    // Load assets sequentially to ensure progress updates correctly
+    for (const asset of assetsList) {
+        try {
+            const img = await loadImage(asset.path);
+            if (asset.subKey) {
+                loadedAssets[asset.key] = loadedAssets[asset.key] || {};
+                if (Array.isArray(ASSETS[asset.key][asset.subKey])) {
+                    loadedAssets[asset.key][asset.subKey] = loadedAssets[asset.key][asset.subKey] || [];
+                    loadedAssets[asset.key][asset.subKey].push(img);
+                } else {
+                    loadedAssets[asset.key][asset.subKey] = img;
+                }
+            } else {
+                if (Array.isArray(ASSETS[asset.key])) {
+                    loadedAssets[asset.key] = loadedAssets[asset.key] || [];
+                    loadedAssets[asset.key].push(img);
+                } else {
+                    loadedAssets[asset.key] = img;
+                }
+            }
+            updateProgress();
+        } catch (error) {
+            console.error(`Failed to load asset: ${asset.path}`, error);
+            throw error;
         }
     }
     
@@ -116,7 +164,15 @@ class Player {
         this.dashDuration = 20; // Duration of dash in frames
         this.dashTimer = 0;
         this.dashTrail = []; // Store previous positions for trail effect
-        this.frames = assets.player.blue;
+
+        // Initialize player animation frames
+        if (assets && assets.player && assets.player.blue) {
+            this.frames = assets.player.blue;
+        } else {
+            console.error('Player assets not properly loaded:', assets);
+            throw new Error('Player assets missing');
+        }
+        
         this.currentFrame = 0;
         this.frameCount = this.frames.length;
         this.frameDelay = 15;
@@ -221,7 +277,15 @@ class Enemy {
         this.width = 64;
         this.height = 64;
         this.speed = 2 + Math.random() * 2;
-        this.frames = assets.enemies[type];
+        
+        // Initialize enemy animation frames with error checking
+        if (assets && assets.enemies && assets.enemies[type]) {
+            this.frames = assets.enemies[type];
+        } else {
+            console.error('Enemy assets not properly loaded:', { assets, type });
+            throw new Error('Enemy assets missing');
+        }
+        
         this.currentFrame = 0;
         this.frameCount = this.frames.length;
         this.frameDelay = 10;
@@ -263,7 +327,15 @@ class Explosion {
         this.y = y;
         this.width = 128;
         this.height = 128;
-        this.frames = assets.explosions;
+        
+        // Initialize explosion animation frames with error checking
+        if (assets && assets.explosions) {
+            this.frames = assets.explosions;
+        } else {
+            console.error('Explosion assets not properly loaded:', assets);
+            throw new Error('Explosion assets missing');
+        }
+        
         this.currentFrame = 0;
         this.frameDelay = 3;
         this.frameTimer = 0;
@@ -351,19 +423,34 @@ let loadedAssets;
 
 async function initGame() {
     resizeCanvas();
-    loadedAssets = await preloadAssets();
-    player = new Player(loadedAssets);
     
-    // Start background music
-    const bgMusic = document.getElementById('bgMusic');
-    bgMusic.volume = 0.2;
-    bgMusic.play();
+    // Show loading screen
+    document.getElementById('loadingScreen').style.display = 'flex';
+    document.getElementById('mainMenu').style.display = 'none';
+    document.getElementById('gameOver').style.display = 'none';
     
-    gameLoop();
+    try {
+        // Load assets first
+        loadedAssets = await preloadAssets();
+        
+        // Hide loading screen and show main menu
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('mainMenu').style.display = 'flex';
+        
+        // Start background menu music
+        const bgMenuMusic = document.getElementById('bgMenuMusic');
+        bgMenuMusic.volume = 0.2;
+        bgMenuMusic.play();
+    } catch (error) {
+        console.error('Failed to load assets:', error);
+        document.getElementById('loadingText').textContent = 'Error loading assets. Please refresh the page.';
+        document.getElementById('loadingProgress').style.backgroundColor = '#ef4444';  // Red background to indicate error
+        throw error; // Re-throw to prevent game from continuing with missing assets
+    }
 }
 
 // Main game loop
-function gameLoop() {
+function gameLoop(assets) {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -380,7 +467,7 @@ function gameLoop() {
         
         // Spawn enemies
         if (Date.now() - gameState.lastSpawnTime > gameState.spawnInterval) {
-            gameState.enemies.push(new Enemy(loadedAssets, Math.random() < 0.5 ? 'red' : 'green'));
+            gameState.enemies.push(new Enemy(assets, Math.random() < 0.5 ? 'red' : 'green'));
             gameState.lastSpawnTime = Date.now();
         }
         
@@ -418,7 +505,7 @@ function gameLoop() {
                     if (checkCollision(projectile, enemy)) {
                         enemy.health -= 25; // Each hit does 25 damage
                         if (enemy.health <= 0) {
-                            gameState.explosions.push(new Explosion(enemy.x, enemy.y, loadedAssets));
+                            gameState.explosions.push(new Explosion(enemy.x, enemy.y, assets));
                             gameState.enemies.splice(i, 1);
                             gameState.score += 100;
                             document.getElementById('score').textContent = gameState.score;
@@ -440,7 +527,7 @@ function gameLoop() {
                 document.getElementById('explosionSound').play();
                 
                 if (gameState.health <= 0) {
-                    gameState.explosions.push(new Explosion(player.x, player.y, loadedAssets));
+                    gameState.explosions.push(new Explosion(player.x, player.y, assets));
                     gameOver();
                 }
                 return false; // Remove projectile after hit
@@ -457,7 +544,7 @@ function gameLoop() {
         const dashCooldownPercent = ((gameState.maxDashCooldown - gameState.dashCooldown) / gameState.maxDashCooldown) * 100;
         document.getElementById('dashCooldownBar').style.width = `${dashCooldownPercent}%`;
         
-        requestAnimationFrame(gameLoop);
+        requestAnimationFrame(() => gameLoop(assets));
     }
 }
 
@@ -476,13 +563,15 @@ async function gameOver() {
 
 // Event listeners
 window.addEventListener('resize', resizeCanvas);
-document.getElementById('startGame').addEventListener('click', () => {
-    document.getElementById('mainMenu').style.display = 'none';
-    initGame();
-});
 
-document.getElementById('restartGame').addEventListener('click', () => {
-    document.getElementById('gameOver').style.display = 'none';
+function startGameWithAssets(assets) {
+    if (!assets) {
+        console.error('No assets provided to start game');
+        throw new Error('Assets not loaded');
+    }
+    // Initialize player with assets
+    player = new Player(assets);
+    
     gameState = {
         score: 0,
         health: 100,
@@ -499,9 +588,41 @@ document.getElementById('restartGame').addEventListener('click', () => {
         dashCooldown: 0,
         maxDashCooldown: 100
     };
+    
     document.getElementById('score').textContent = '0';
     document.getElementById('healthBar').style.width = '100%';
     document.getElementById('energyBar').style.width = '100%';
     document.getElementById('dashCooldownBar').style.width = '100%';
-    initGame();
+    
+    // Start game loop with assets
+    gameLoop(assets);
+}
+
+document.getElementById('startGame').addEventListener('click', () => {
+    document.getElementById('mainMenu').style.display = 'none';
+    
+    // Switch from menu music to game music
+    document.getElementById('bgMenuMusic').pause();
+    document.getElementById('bgMenuMusic').currentTime = 0;
+    
+    const bgMusic = document.getElementById('bgMusic');
+    bgMusic.volume = 0.2;
+    bgMusic.play();
+    
+    // Start game with loaded assets
+    startGameWithAssets(loadedAssets);
 });
+
+document.getElementById('restartGame').addEventListener('click', () => {
+    // Reset game state and start with existing assets
+    document.getElementById('gameOver').style.display = 'none';
+    if (!loadedAssets) {
+        console.error('No assets available for restart');
+        initGame(); // Reload assets if they're missing
+        return;
+    }
+    startGameWithAssets(loadedAssets);
+});
+
+// Initialize game when page loads
+window.addEventListener('DOMContentLoaded', initGame);
