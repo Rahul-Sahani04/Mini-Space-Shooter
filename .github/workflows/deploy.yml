@@ -1,5 +1,7 @@
 name: Deploy
 
+# This workflow builds the project and deploys it to GitHub Pages
+# It runs on pushes to the main branch and uploads the production-ready files
 on:
   push:
     branches:
