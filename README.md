@@ -74,21 +74,17 @@ stellar-conflict/
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/stellar-conflict.git
-cd stellar-conflict
+git clone https://github.com/Rahul-Sahani04/Mini-Space-Shooter.git
+cd Mini-Space-Shooter
 ```
 
 2. Install dependencies:
 ```bash
-make install
-# or
 npm install
 ```
 
 3. Start development server:
 ```bash
-make dev
-# or
 npm run dev
 ```
 
@@ -96,19 +92,14 @@ npm run dev
 
 ### Available Scripts
 
-- `make dev` - Start development server
-- `make build` - Build for production
-- `make preview` - Preview production build
-- `make lint` - Lint code
-- `make format` - Format code
-- `make test` - Run tests
-- `make clean` - Clean build artifacts
-- `make help` - Show all available commands
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run lint` - Lint code
 
 ## Building for Production
 
 ```bash
-make build
+npm run build
 ```
 
 The production build will be in the `dist` directory.
@@ -130,8 +121,7 @@ git checkout -b feature/your-feature-name
 
 2. Make your changes and ensure they follow the coding standards:
 ```bash
-make format
-make lint
+npm run lint
 ```
 
 3. Test your changes:
