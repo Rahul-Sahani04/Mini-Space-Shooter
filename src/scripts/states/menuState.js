@@ -60,14 +60,16 @@ export class MenuState extends GameState {
         controls.className = 'modal';
         controls.innerHTML = `
             <div class="modal-content">
-                <h2>Controls</h2>
+                <h2
+                style="color: #4CAF50; font-size: 24px; text-align: center;"
+                >Controls</h2>
                 <ul>
                     <li>Arrow Keys: Move ship</li>
                     <li>Space: Fire</li>
                     <li>Shift: Dash</li>
                     <li>Esc: Pause game</li>
                 </ul>
-                <button class="close-button">Close</button>
+                <button class="close-button" style="margin-top: 20px; padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 5px;">Close</button>
             </div>
         `;
         document.body.appendChild(controls);
@@ -82,10 +84,10 @@ export class MenuState extends GameState {
         about.className = 'modal';
         about.innerHTML = `
             <div class="modal-content">
-                <h2>About</h2>
+                <h2 style="color: #4CAF50; font-size: 24px; text-align: center;" >About</h2>
                 <p>A space shooter game built with modern JavaScript.</p>
-                <p>Version 1.0.0</p>
-                <button class="close-button">Close</button>
+                <p>Version 1.2.0</p>
+                <button class="close-button" style="margin-top: 20px; padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 5px;">Close</button>
             </div>
         `;
         document.body.appendChild(about);

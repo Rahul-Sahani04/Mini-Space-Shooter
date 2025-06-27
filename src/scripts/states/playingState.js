@@ -1,4 +1,5 @@
 import GameState from './gameState.js';
+import { Explosion } from '../entities/explosion.js';
 import { PausedState } from './pausedState.js';
 import { GameOverState } from './gameOverState.js';
 import { Player } from '../entities/player.js';
@@ -224,7 +225,7 @@ export class PlayingState extends GameState {
         this.game.gameState.isGameOver = true;
 
         // Create final explosion
-        const explosion = new this.game.Explosion(
+        const explosion = new Explosion(
             this.game.player.x,
             this.game.player.y,
             this.game.assetManager
