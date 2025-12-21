@@ -7,7 +7,7 @@ export class Projectile {
         this.reset(x, y, type);
     }
 
-    reset(x, y, type) {
+    reset(x, y, type, angle = 0) {
         this.x = x;
         this.y = y;
         this.width = GAME_CONFIG.PROJECTILE.WIDTH;
@@ -16,6 +16,7 @@ export class Projectile {
             GAME_CONFIG.PROJECTILE.PLAYER_SPEED : 
             GAME_CONFIG.PROJECTILE.ENEMY_SPEED;
         this.type = type;
+        this.angle = angle;
         this.active = true;
         
         // Get cached image based on type
@@ -26,11 +27,13 @@ export class Projectile {
     }
 
     update() {
-        this.y += this.speed;
+        this.y += Math.cos(this.angle) * this.speed;
+        this.x += Math.sin(this.angle) * Math.abs(this.speed);
         
         // Check if projectile is off screen
         const canvas = document.getElementById('gameCanvas');
-        if (this.y < -this.height || this.y > canvas.height + this.height) {
+        if (this.y < -this.height || this.y > canvas.height + this.height || 
+            this.x < -this.width || this.x > canvas.width + this.width) {
             this.active = false;
         }
     }

@@ -102,9 +102,11 @@ export class MenuState extends GameState {
     }
 
     render() {
-        // Render menu background effects if any
         const ctx = this.game.renderer.ctx;
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        
+        // Draw starfield
+        this.game.renderer.drawStarfield(this.game.stars);
     }
 }
 

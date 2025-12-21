@@ -12,6 +12,8 @@ export const GAME_CONFIG = {
         INITIAL_ENERGY: 100,
         ENERGY_REGEN: 0.2,
         SHOOT_COST: 10,
+        UPGRADE_THRESHOLD: 1000,
+        MAX_LEVEL: 20,
     },
 
     ENEMY: {
@@ -24,6 +26,14 @@ export const GAME_CONFIG = {
         DAMAGE: 15, // Enemy projectile damage
         SHOOT_CHANCE: 0.01,
         SPAWN_INTERVAL: 2000,
+    },
+
+    CHARGER: {
+        SPEED: 6,
+        HEALTH: 30,
+        DAMAGE: 20,
+        SIZE: 40,
+        COLOR: '#ff00ff', // Visual distinction if no sprite
     },
 
     PROJECTILE: {
@@ -42,6 +52,7 @@ export const GAME_CONFIG = {
         HEALTH_RESTORE: 30,
         SHIELD_RESTORE: 50,
         ENERGY_RESTORE: 100,
+        MULTISHOT_DURATION: 10000, // 10 seconds
     },
 
     COMBO: {
@@ -78,6 +89,11 @@ export const ASSETS = {
             '/assets/PixelSpaceRage/128px/Enemy01_Green_Frame_2_png_processed.png',
             '/assets/PixelSpaceRage/128px/Enemy01_Green_Frame_3_png_processed.png',
         ],
+        charger: [
+             '/assets/PixelSpaceRage/128px/Enemy01_Red_Frame_1_png_processed.png',
+             '/assets/PixelSpaceRage/128px/Enemy01_Red_Frame_2_png_processed.png',
+             '/assets/PixelSpaceRage/128px/Enemy01_Red_Frame_3_png_processed.png',
+        ]
     },
     explosions: Array.from(
         { length: 9 },
@@ -87,6 +103,7 @@ export const ASSETS = {
         health: '/assets/PixelSpaceRage/128px/Powerup_Health_png_processed.png',
         shield: '/assets/PixelSpaceRage/128px/Powerup_Shields_png_processed.png',
         ammo: '/assets/PixelSpaceRage/128px/Powerup_Ammo_png_processed.png',
+        multishot: '/assets/PixelSpaceRage/128px/Powerup_Ammo_png_processed.png',
     },
     projectiles: {
         laser: '/assets/PixelSpaceRage/128px/Laser_Small_png_processed.png',
@@ -109,6 +126,7 @@ export const COLORS = {
     ENERGY: '#4af',
     AMMO: '#f44',
     COMBO: '#f4f',
+    MULTISHOT: '#ff0',
 };
 
 // Tutorial steps
@@ -162,5 +180,17 @@ export const INITIAL_GAME_STATE = {
     maxDashCooldown: GAME_CONFIG.DASH.MAX_COOLDOWN,
     lastComboTime: 0,
     comboCount: 0,
+    comboCount: 0,
     comboTimeout: GAME_CONFIG.COMBO.TIMEOUT,
+    
+    // Upgrade System
+    playerLevel: 1,
+    nextUpgradeScore: GAME_CONFIG.PLAYER.UPGRADE_THRESHOLD,
+    stats: {
+        damage: GAME_CONFIG.PLAYER.DAMAGE,
+        fireRate: GAME_CONFIG.PLAYER.SHOOT_COOLDOWN || 15,
+        maxHealth: GAME_CONFIG.PLAYER.INITIAL_HEALTH,
+        maxEnergy: GAME_CONFIG.PLAYER.INITIAL_ENERGY,
+        energyRegen: GAME_CONFIG.PLAYER.ENERGY_REGEN
+    }
 };

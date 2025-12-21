@@ -76,11 +76,12 @@ export class PowerUp {
             case 'health': return COLORS.HEALTH;
             case 'shield': return COLORS.SHIELD;
             case 'ammo': return COLORS.AMMO;
+            case 'multishot': return COLORS.MULTISHOT;
             default: return '#fff';
         }
     }
 
-    applyEffect(gameState) {
+    applyEffect(gameState, player) {
         switch(this.type) {
             case 'health':
                 gameState.health = Math.min(100, gameState.health + GAME_CONFIG.POWERUP.HEALTH_RESTORE);
@@ -90,6 +91,12 @@ export class PowerUp {
                 break;
             case 'ammo':
                 gameState.energy = Math.min(200, gameState.energy + GAME_CONFIG.POWERUP.ENERGY_RESTORE);
+                break;
+            case 'multishot':
+                if (player) {
+                    player.multiShotActive = true;
+                    player.multiShotTimer = GAME_CONFIG.POWERUP.MULTISHOT_DURATION;
+                }
                 break;
         }
 
@@ -137,6 +144,7 @@ export class PowerUp {
             case 'health': return `+${GAME_CONFIG.POWERUP.HEALTH_RESTORE} HP`;
             case 'shield': return `+${GAME_CONFIG.POWERUP.SHIELD_RESTORE} SHIELD`;
             case 'ammo': return `+${GAME_CONFIG.POWERUP.ENERGY_RESTORE} ENERGY`;
+            case 'multishot': return 'MULTI-SHOT!';
             default: return '';
         }
     }

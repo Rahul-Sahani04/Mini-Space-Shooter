@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stellar Conflict | Space Shooter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/src/styles/main.css">
+    <link rel="stylesheet" href="/styles.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png">
 </head>
+
 <body class="text-white">
     <div id="gameContainer">
         <!-- Parallax Background Layers -->
-        <div class="parallax-background" role="presentation" aria-hidden="true">
+        <div class="parallax-background bgLayer" role="presentation" aria-hidden="true">
             <div class="parallax-layer" id="bgLayer1" aria-hidden="true"></div>
             <div class="parallax-layer" id="bgLayer2" aria-hidden="true"></div>
             <div class="parallax-layer" id="bgLayer3" aria-hidden="true"></div>
@@ -56,7 +58,8 @@
         <div id="loadingScreen" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black">
             <h1 class="text-4xl font-bold mb-8 text-blue-400">LOADING...</h1>
             <div class="w-64 h-4 bg-gray-800 rounded-full overflow-hidden">
-                <div id="loadingProgress" class="h-full bg-blue-500 rounded-full" style="width: 0%; transition: width 0.3s;"></div>
+                <div id="loadingProgress" class="h-full bg-blue-500 rounded-full"
+                    style="width: 0%; transition: width 0.3s;"></div>
             </div>
             <div class="mt-4 text-gray-400">
                 <span id="loadingText">Loading assets...</span>
@@ -64,36 +67,57 @@
         </div>
 
         <!-- Main Menu -->
-        <div id="mainMenu" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80 hidden">
-            <h1 class="text-5xl md:text-6xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
-                STELLAR CONFLICT</h1>
-            <div class="flex flex-col space-y-4 w-64">
-                <button id="startGame" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-lg transition-all transform hover:scale-105">
-                    START MISSION
-                </button>
-                <button id="controlsButton" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold text-lg transition-all transform hover:scale-105">
-                    CONTROLS
-                </button>
-                <button id="aboutButton" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold text-lg transition-all transform hover:scale-105">
-                    ABOUT
-                </button>
-            </div>
-            <div class="mt-8 text-gray-400">
-                <p>Use arrow keys to move, SPACE to fire, SHIFT to dash</p>
+        <!-- Main Menu -->
+        <div id="mainMenu" class="absolute inset-0 z-50 flex flex-col items-center justify-center hidden">
+            <div class="glass-panel flex flex-col items-center">
+                <div class="title-container">
+                    <h1 class="main-title">STELLAR<br>CONFLICT</h1>
+                    <div class="subtitle">Tactical Space Combat</div>
+                </div>
+
+                <div class="flex flex-col space-y-6 w-72">
+                    <button id="startGame" class="menu-button">
+                        Start Mission
+                    </button>
+                    <button id="controlsButton" class="menu-button">
+                        Controls
+                    </button>
+                    <button id="aboutButton" class="menu-button">
+                        About
+                    </button>
+                </div>
+
+                <div class="mt-8 text-center">
+                    <p class="neon-text-purple text-sm tracking-widest">SYSTEM ONLINE</p>
+                </div>
             </div>
         </div>
 
         <!-- Game Over Screen -->
-        <div id="gameOver" class="absolute inset-0 z-50 flex-col items-center justify-center bg-black bg-opacity-80 hidden">
-            <h1 class="text-5xl font-bold mb-4 text-red-500">MISSION FAILED</h1>
-            <div class="text-2xl mb-8">Final Score: <span id="finalScore">0</span></div>
-            <div class="flex space-x-4">
-                <button id="restartGame" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-lg transition-all transform hover:scale-105">
-                    TRY AGAIN
-                </button>
-                <button id="returnToMenu" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold text-lg transition-all transform hover:scale-105">
-                    MENU
-                </button>
+        <!-- Game Over Screen -->
+        <div id="gameOver"
+            class="absolute inset-0 z-50 flex-col items-center justify-center bg-black bg-opacity-80 hidden">
+            <div class="glass-panel flex flex-col items-center">
+                <div class="title-container">
+                    <h1 class="main-title"
+                        style="font-size: 3.5rem; color: #ff4444; background: none; -webkit-text-fill-color: #ff4444; text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);">
+                        MISSION<br>FAILED</h1>
+                    <div class="subtitle" style="color: #ff4444; opacity: 0.8;">Systems Critical</div>
+                </div>
+
+                <div class="text-2xl mb-8 font-bold tracking-widest text-[#bc13fe]">
+                    FINAL SCORE: <span id="finalScore"
+                        class="text-[#00f3ff] text-3xl ml-2 drop-shadow-[0_0_10px_rgba(0,243,255,0.5)]">0</span>
+                </div>
+
+                <div class="flex flex-col space-y-4 w-64">
+                    <button id="restartGame" class="menu-button">
+                        RETRY MISSION
+                    </button>
+                    <button id="returnToMenu" class="menu-button">
+                        ABORT TO MENU
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -119,4 +143,5 @@
     <!-- Main Script -->
     <script type="module" src="/src/scripts/index.js"></script>
 </body>
+
 </html>

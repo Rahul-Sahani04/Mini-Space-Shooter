@@ -4,7 +4,7 @@ import { Explosion } from './explosion.js';
 import { PowerUp } from './powerup.js';
 
 export class Enemy {
-    constructor(game, type = 'red') {
+    constructor(game, type = 'red', difficultyMultiplier = 1) {
         this.game = game;
         this.frames = game.assetManager.getSprite(`enemy${type}`);
         if (!this.frames || !Array.isArray(this.frames) || this.frames.length === 0) {
@@ -15,20 +15,32 @@ export class Enemy {
         }
 
         // Initialize with reset
-        this.reset(type);
+        this.reset(type, difficultyMultiplier);
     }
 
-    reset(type) {
+    reset(type, difficultyMultiplier = 1) {
         const canvas = document.getElementById('gameCanvas');
         
         this.x = Math.random() * (canvas.width - GAME_CONFIG.ENEMY.WIDTH);
         this.y = -GAME_CONFIG.ENEMY.HEIGHT;
-        this.width = GAME_CONFIG.ENEMY.SIZE;
-        this.height = GAME_CONFIG.ENEMY.SIZE;
-        this.speed = GAME_CONFIG.ENEMY.MIN_SPEED + 
-                    Math.random() * (GAME_CONFIG.ENEMY.MAX_SPEED - GAME_CONFIG.ENEMY.MIN_SPEED);
         this.type = type;
-        this.health = GAME_CONFIG.ENEMY.HEALTH;
+        
+        // Apply difficulty multiplier
+        // Cap speed multiplier to avoid impossible seeds
+        const speedMult = Math.min(2.0, difficultyMultiplier);
+        
+        if (type === 'charger') {
+            this.width = GAME_CONFIG.CHARGER.SIZE;
+            this.height = GAME_CONFIG.CHARGER.SIZE;
+            this.speed = GAME_CONFIG.CHARGER.SPEED * speedMult;
+            this.health = GAME_CONFIG.CHARGER.HEALTH * difficultyMultiplier;
+        } else {
+            this.width = GAME_CONFIG.ENEMY.SIZE;
+            this.height = GAME_CONFIG.ENEMY.SIZE;
+            this.speed = (GAME_CONFIG.ENEMY.MIN_SPEED + 
+                        Math.random() * (GAME_CONFIG.ENEMY.MAX_SPEED - GAME_CONFIG.ENEMY.MIN_SPEED)) * speedMult;
+            this.health = GAME_CONFIG.ENEMY.HEALTH * difficultyMultiplier;
+        }
 
         // Animation properties
         this.currentFrame = 0;
@@ -38,8 +50,17 @@ export class Enemy {
     }
 
     update(gameState) {
-        // Move downward
-        this.y += this.speed;
+        if (this.type === 'charger') {
+            this.y += this.speed;
+            // Simple tracking
+            if (this.game.player) {
+                const dx = this.game.player.x - this.x;
+                this.x += Math.sign(dx) * 2;
+            }
+        } else {
+            // Move downward
+            this.y += this.speed;
+        }
 
         // Clamp position to canvas bounds
         const canvas = document.getElementById('gameCanvas');
@@ -166,7 +187,7 @@ export class Enemy {
 
     tryDropPowerup(gameState) {
         if (Math.random() < GAME_CONFIG.POWERUP.DROP_CHANCE) {
-            const powerUpTypes = ['health', 'shield', 'ammo'];
+            const powerUpTypes = ['health', 'shield', 'ammo', 'multishot'];
             const randomType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
             
             const powerup = new PowerUp(this.x, this.y, randomType, this.game.assetManager);

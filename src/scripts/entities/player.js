@@ -14,6 +14,8 @@ export class Player {
         this.dashDuration = GAME_CONFIG.PLAYER.DASH_DURATION;
         this.dashTimer = 0;
         this.dashTrail = [];
+        this.multiShotActive = false;
+        this.multiShotTimer = 0;
 
         // Animation properties
         this.frames = assetManager.getSprite('playerBlue');
@@ -69,6 +71,14 @@ export class Player {
             this.currentSpeed = this.speed;
         }
 
+        // Update multishot timer
+        if (this.multiShotActive) {
+            this.multiShotTimer -= 16; // approx 60fps
+            if (this.multiShotTimer <= 0) {
+                this.multiShotActive = false;
+            }
+        }
+
         // Update movement
         const canvas = document.getElementById('gameCanvas');
         if (keys.ArrowLeft && this.x > 0) this.x -= this.currentSpeed;
@@ -101,7 +111,26 @@ export class Player {
                 projectile.reset(this.x, this.y - this.height / 2, 'player');
             }
 
+            if (!projectile.fromPool) {
+                projectile.reset(this.x, this.y - this.height / 2, 'player');
+            }
             gameState.projectiles.push(projectile);
+
+            // Handle multishot
+            if (this.multiShotActive) {
+                [-0.2, 0.2].forEach(angle => {
+                    const extraProj = game.objectPools.getFromPool('projectiles') ||
+                        new Projectile(this.x, this.y - this.height / 2, 'player', game);
+                    
+                    if (!extraProj.fromPool) {
+                        extraProj.reset(this.x, this.y - this.height / 2, 'player', angle);
+                    } else {
+                        // Reset pooled projectile with angle
+                        extraProj.reset(this.x, this.y - this.height / 2, 'player', angle);
+                    }
+                    gameState.projectiles.push(extraProj);
+                });
+            }
             gameState.energy = Math.max(0, gameState.energy - GAME_CONFIG.PLAYER.SHOOT_COST);
 
             // Update energy bar UI

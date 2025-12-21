@@ -16,8 +16,11 @@ export class PlayingState extends GameState {
         this.game.player = new Player(this.game.assetManager);
         this.game.tutorial = new TutorialSystem(this.game);
         
-        // Reset game state
-        this.game.gameState = { ...INITIAL_GAME_STATE };
+        // Reset game state with deep copy for stats
+        this.game.gameState = { 
+            ...INITIAL_GAME_STATE,
+            stats: { ...INITIAL_GAME_STATE.stats }
+        };
         
         // Reset UI
         document.getElementById('score').textContent = '0';
@@ -148,11 +151,41 @@ export class PlayingState extends GameState {
             document.getElementById('dashCooldownBar').style.width = '100%';
         }
 
+        // --- UPGRADE SYSTEM ---
+        if (gameState.score >= gameState.nextUpgradeScore) {
+            this.handlePlayerUpgrade();
+        }
+
+        // Spawn enemies
+        // Difficulty Scaling
+        const score = gameState.score || 0;
+        const difficultyMultiplier = 1 + (score / 1000); // +10% stats every 100 points
+        
+        // Dynamic spawn rate
+        const minSpawnInterval = 600;
+        const variableInterval = Math.max(
+            minSpawnInterval, 
+            GAME_CONFIG.ENEMY.SPAWN_INTERVAL - (score * 0.8) // Reduce interval by 0.8ms per point
+        );
+        gameState.spawnInterval = variableInterval;
+
         // Spawn enemies
         if (Date.now() - gameState.lastSpawnTime > gameState.spawnInterval) {
+            // Determine enemy type based on score
+            let type = Math.random() < 0.5 ? 'red' : 'green';
+            
+            // Introduce Chargers after 500 points
+            if (score > 500) {
+                // 20% chance for charger, increases slightly with difficulty
+                if (Math.random() < 0.2 + (score / 5000)) {
+                    type = 'charger';
+                }
+            }
+
             const enemy = new Enemy(
                 this.game,
-                Math.random() < 0.5 ? 'red' : 'green'
+                type,
+                difficultyMultiplier
             );
             gameState.enemies.push(enemy);
             gameState.lastSpawnTime = Date.now();
@@ -184,7 +217,7 @@ export class PlayingState extends GameState {
                         checkCollision(projectile, enemy)
                     ) {
                         projectile.active = false;
-                        enemy.takeDamage(GAME_CONFIG.PLAYER.DAMAGE, gameState);
+                        enemy.takeDamage(gameState.stats.damage, gameState);
                     }
                 });
             }
@@ -204,7 +237,7 @@ export class PlayingState extends GameState {
         gameState.powerups = gameState.powerups.filter(powerup => {
             powerup.update();
             if (checkCollision(powerup, this.game.player)) {
-                powerup.applyEffect(gameState);
+                powerup.applyEffect(gameState, this.game.player);
                 return false;
             }
             return powerup.y < this.game.renderer.canvas.height + 32;
@@ -217,8 +250,14 @@ export class PlayingState extends GameState {
         });
 
         // Update energy regeneration
-        gameState.energy = Math.min(200, gameState.energy + GAME_CONFIG.PLAYER.ENERGY_REGEN);
-        document.getElementById('energyBar').style.width = `${gameState.energy}%`;
+        // Use dynamic max energy from stats
+        const maxEnergy = gameState.stats.maxEnergy;
+        gameState.energy = Math.min(maxEnergy, gameState.energy + gameState.stats.energyRegen);
+        document.getElementById('energyBar').style.width = `${(gameState.energy / maxEnergy) * 100}%`;
+        
+        // Update health bar based on dynamic max health
+        const maxHealth = gameState.stats.maxHealth;
+        document.getElementById('healthBar').style.width = `${(gameState.health / maxHealth) * 100}%`;
     }
 
     handleGameOver() {
@@ -238,15 +277,85 @@ export class PlayingState extends GameState {
         }, 1000);
     }
 
+    handlePlayerUpgrade() {
+        const gameState = this.game.gameState;
+        
+        // Increase requirement for next upgrade
+        gameState.nextUpgradeScore += GAME_CONFIG.PLAYER.UPGRADE_THRESHOLD;
+        gameState.playerLevel++;
+
+        // Randomly select upgrade type
+        const upgradeTypes = ['damage', 'fireRate', 'maxStats', 'energyRegen'];
+        const type = upgradeTypes[Math.floor(Math.random() * upgradeTypes.length)];
+        
+        let message = '';
+        
+        switch(type) {
+            case 'damage':
+                gameState.stats.damage += 5;
+                message = 'WEAPON DAMAGE UPGRADED';
+                break;
+            case 'fireRate':
+                gameState.stats.fireRate = Math.max(5, gameState.stats.fireRate - 1);
+                message = 'FIRE RATE INCREASED';
+                break;
+            case 'maxStats':
+                gameState.stats.maxHealth += 20;
+                gameState.stats.maxEnergy += 20;
+                gameState.health += 20; // Heal amount added
+                gameState.energy += 20;
+                message = 'HULL & ENERGY CAPACITY EXPANDED';
+                break;
+            case 'energyRegen':
+                gameState.stats.energyRegen += 0.1;
+                message = 'ENERGY REGENERATION BOOSTED';
+                break;
+        }
+
+        // Show upgrade notification
+        this.showUpgradeNotification(message);
+        
+        // Play upgrade sound
+        const powerupSound = this.game.assetManager.getAudio('powerup');
+        if (powerupSound) {
+            powerupSound.volume = 0.6;
+            powerupSound.currentTime = 0;
+            powerupSound.play().catch(() => {});
+        }
+    }
+
+    showUpgradeNotification(text) {
+        const notification = document.createElement('div');
+        notification.className = 'upgrade-notification';
+        notification.textContent = text;
+        
+        // Style handled in CSS or JS, injecting basic style here ensuring visibility
+        notification.style.position = 'absolute';
+        notification.style.top = '20%';
+        notification.style.left = '50%';
+        notification.style.transform = 'translate(-50%, -50%)';
+        notification.style.color = '#00f3ff';
+        notification.style.fontSize = '24px';
+        notification.style.fontWeight = 'bold';
+        notification.style.textShadow = '0 0 10px #00f3ff';
+        notification.style.zIndex = '100';
+        notification.style.pointerEvents = 'none';
+        notification.style.animation = 'fadeUp 2s ease-out forwards';
+        
+        document.getElementById('gameContainer').appendChild(notification);
+        
+        setTimeout(() => notification.remove(), 2000);
+    }
+
     cleanupEffects() {
         const effects = document.querySelectorAll(
-            '.damage-number, .powerup-collection, .hit-effect'
+            '.damage-number, .powerup-collection, .hit-effect, .upgrade-notification'
         );
         effects.forEach(effect => effect.remove());
     }
 
     render() {
-        this.game.renderer.render(this.game.gameState, this.game.player);
+        this.game.renderer.render(this.game.gameState, this.game.player, this.game.stars);
         particleSystem.draw(this.game.renderer.ctx);
     }
 }

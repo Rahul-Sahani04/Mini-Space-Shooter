@@ -35,6 +35,46 @@ export class Game {
         document.addEventListener('keyup', (e) => {
             this.keys[e.code] = false;
         });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => this.handleResize());
+
+        this.stars = [];
+    }
+    
+    handleResize() {
+        const canvas = document.getElementById('gameCanvas');
+        const gameContainer = document.getElementById('gameContainer');
+        if (canvas && gameContainer) {
+            canvas.width = gameContainer.clientWidth;
+            canvas.height = gameContainer.clientHeight;
+        }
+    }
+    
+    createStars() {
+        const count = 100;
+        for (let i = 0; i < count; i++) {
+            this.stars.push({
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                size: Math.random() * 2 + 0.5,
+                speed: Math.random() * 3 + 0.5,
+                alpha: Math.random()
+            });
+        }
+    }
+
+    updateStars() {
+        const canvas = document.getElementById('gameCanvas');
+        if (!canvas) return;
+        
+        this.stars.forEach(star => {
+            star.y += star.speed;
+            if (star.y > canvas.height) {
+                star.y = 0;
+                star.x = Math.random() * canvas.width;
+            }
+        });
     }
 
     async initialize() {
@@ -59,6 +99,8 @@ export class Game {
             // Initialize asset manager and load assets
             this.assetManager = new AssetManager();
             await this.assetManager.loadAll();
+            
+            this.createStars();
             
             // Start game loop
             this.gameLoop();
@@ -86,6 +128,7 @@ export class Game {
     }
 
     gameLoop = () => {
+        this.updateStars();
         if (this.currentState) {
             this.currentState.update();
             this.currentState.render();

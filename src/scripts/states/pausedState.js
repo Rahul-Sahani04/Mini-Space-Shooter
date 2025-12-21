@@ -54,14 +54,17 @@ export class PausedState extends GameState {
 
     createPauseOverlay() {
         this.overlay = document.createElement('div');
-        this.overlay.className = 'pause-overlay';
+        this.overlay.className = 'absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-50';
         this.overlay.innerHTML = `
-            <div class="pause-menu">
-                <h2>PAUSED</h2>
-                <div class="menu-buttons">
-                    <button id="resumeButton" class="pause-button">Resume Game</button>
-                    <button id="optionsButton" class="pause-button">Options</button>
-                    <button id="quitButton" class="pause-button">Quit to Menu</button>
+            <div class="glass-panel flex flex-col items-center">
+                <div class="title-container">
+                    <h1 class="main-title" style="font-size: 4rem;">PAUSED</h1>
+                    <div class="subtitle">Mission Suspended</div>
+                </div>
+                <div class="flex flex-col space-y-6 w-72">
+                    <button id="resumeButton" class="menu-button">Resume Mission</button>
+                    <button id="optionsButton" class="menu-button">Tactical Options</button>
+                    <button id="quitButton" class="menu-button">Abort Mission</button>
                 </div>
             </div>
         `;
@@ -89,33 +92,40 @@ export class PausedState extends GameState {
         const settings = storage.getSettings();
         
         const optionsMenu = document.createElement('div');
-        optionsMenu.className = 'options-menu';
+        optionsMenu.className = 'absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80';
         optionsMenu.innerHTML = `
-            <div class="options-content">
-                <h3>Options</h3>
-                <div class="option-item">
-                    <label for="musicVolume">Music Volume</label>
-                    <input type="range" id="musicVolume" min="0" max="100" value="${settings.musicVolume * 100}">
+            <div class="glass-panel flex flex-col items-center">
+                <div class="title-container">
+                    <h2 class="main-title" style="font-size: 3rem;">OPTIONS</h2>
                 </div>
-                <div class="option-item">
-                    <label for="sfxVolume">Sound Effects Volume</label>
-                    <input type="range" id="sfxVolume" min="0" max="100" value="${settings.sfxVolume * 100}">
+                
+                <div class="w-full space-y-6 mb-8 text-white">
+                    <div class="flex flex-col space-y-2">
+                        <label for="musicVolume" class="text-cyan-400 font-bold tracking-wider">MUSIC VOLUME</label>
+                        <input type="range" id="musicVolume" min="0" max="100" value="${settings.musicVolume * 100}" class="w-full accent-cyan-500">
+                    </div>
+                    
+                    <div class="flex flex-col space-y-2">
+                        <label for="sfxVolume" class="text-secondary font-bold tracking-wider" style="color: #bc13fe;">SFX VOLUME</label>
+                        <input type="range" id="sfxVolume" min="0" max="100" value="${settings.sfxVolume * 100}" class="w-full accent-purple-500">
+                    </div>
+                    
+                    <div class="flex items-center space-x-3 mt-4">
+                        <input type="checkbox" id="showTutorial" ${settings.showTutorial ? 'checked' : ''} class="w-6 h-6 accent-cyan-500">
+                        <label for="showTutorial" class="text-white font-bold tracking-wider">SHOW TUTORIAL</label>
+                    </div>
+
+                    <div class="flex flex-col space-y-2">
+                        <label class="text-cyan-400 font-bold tracking-wider">DIFFICULTY</label>
+                        <select id="difficulty" class="bg-gray-900 border border-cyan-500 text-white p-2 rounded">
+                            <option value="easy" ${settings.difficulty === 'easy' ? 'selected' : ''}>Easy</option>
+                            <option value="normal" ${settings.difficulty === 'normal' ? 'selected' : ''}>Normal</option>
+                            <option value="hard" ${settings.difficulty === 'hard' ? 'selected' : ''}>Hard</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="option-item">
-                    <label>
-                        <input type="checkbox" id="showTutorial" ${settings.showTutorial ? 'checked' : ''}>
-                        Show Tutorial
-                    </label>
-                </div>
-                <div class="option-item">
-                    <label>Difficulty</label>
-                    <select id="difficulty">
-                        <option value="easy" ${settings.difficulty === 'easy' ? 'selected' : ''}>Easy</option>
-                        <option value="normal" ${settings.difficulty === 'normal' ? 'selected' : ''}>Normal</option>
-                        <option value="hard" ${settings.difficulty === 'hard' ? 'selected' : ''}>Hard</option>
-                    </select>
-                </div>
-                <button id="closeOptions" class="pause-button">Save & Close</button>
+
+                <button id="closeOptions" class="menu-button">Save & Close</button>
             </div>
         `;
 

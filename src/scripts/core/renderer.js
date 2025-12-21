@@ -9,6 +9,18 @@ export class GameRenderer {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
+    drawStarfield(stars) {
+        if (!stars) return;
+        this.ctx.fillStyle = '#ffffff';
+        stars.forEach(star => {
+            this.ctx.globalAlpha = star.alpha;
+            this.ctx.beginPath();
+            this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+            this.ctx.fill();
+        });
+        this.ctx.globalAlpha = 1;
+    }
+
     drawPlayer(player) {
         // Draw dash trail
         if (player.isDashing) {
@@ -121,8 +133,10 @@ export class GameRenderer {
         }
     }
 
-    render(gameState, player) {
+    render(gameState, player, stars) {
         this.clear();
+
+        this.drawStarfield(stars);
 
         // Draw game entities
         gameState.powerups.forEach(p => this.drawPowerUp(p));
