@@ -10,7 +10,7 @@ export const GAME_CONFIG = {
         DAMAGE: 15, // Player projectile damage
         INITIAL_HEALTH: 100,
         INITIAL_ENERGY: 100,
-        ENERGY_REGEN: 0.2,
+        ENERGY_REGEN: 0.4,
         SHOOT_COST: 10,
         UPGRADE_THRESHOLD: 1000,
         MAX_LEVEL: 20,

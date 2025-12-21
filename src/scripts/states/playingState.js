@@ -284,8 +284,11 @@ export class PlayingState extends GameState {
         gameState.nextUpgradeScore += GAME_CONFIG.PLAYER.UPGRADE_THRESHOLD;
         gameState.playerLevel++;
 
-        // Randomly select upgrade type
-        const upgradeTypes = ['damage', 'fireRate', 'maxStats', 'energyRegen'];
+        // Guaranteed Energy Regen Boost (per user request)
+        gameState.stats.energyRegen += 0.2;
+
+        // Randomly select upgrade type (removed 'energyRegen' as it's now guaranteed)
+        const upgradeTypes = ['damage', 'fireRate', 'maxStats'];
         const type = upgradeTypes[Math.floor(Math.random() * upgradeTypes.length)];
         
         let message = '';
@@ -293,22 +296,18 @@ export class PlayingState extends GameState {
         switch(type) {
             case 'damage':
                 gameState.stats.damage += 5;
-                message = 'WEAPON DAMAGE UPGRADED';
+                message = 'DAMAGE & REGEN UPGRADED';
                 break;
             case 'fireRate':
                 gameState.stats.fireRate = Math.max(5, gameState.stats.fireRate - 1);
-                message = 'FIRE RATE INCREASED';
+                message = 'FIRE RATE & REGEN UPGRADED';
                 break;
             case 'maxStats':
                 gameState.stats.maxHealth += 20;
                 gameState.stats.maxEnergy += 20;
                 gameState.health += 20; // Heal amount added
                 gameState.energy += 20;
-                message = 'HULL & ENERGY CAPACITY EXPANDED';
-                break;
-            case 'energyRegen':
-                gameState.stats.energyRegen += 0.1;
-                message = 'ENERGY REGENERATION BOOSTED';
+                message = 'CAPACITY & REGEN UPGRADED';
                 break;
         }
 
