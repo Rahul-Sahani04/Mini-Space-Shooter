@@ -1,147 +1,217 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stellar Conflict | Space Shooter</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/styles.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/assets/icons/favicon-16x16.png">
 </head>
+<body>
+<div id="gameContainer">
 
-<body class="text-white">
-    <div id="gameContainer">
-        <!-- Parallax Background Layers -->
-        <div class="parallax-background bgLayer" role="presentation" aria-hidden="true">
-            <div class="parallax-layer" id="bgLayer1" aria-hidden="true"></div>
-            <div class="parallax-layer" id="bgLayer2" aria-hidden="true"></div>
-            <div class="parallax-layer" id="bgLayer3" aria-hidden="true"></div>
-        </div>
-
-        <!-- Game Canvas -->
-        <canvas id="gameCanvas"></canvas>
-
-        <!-- UI Elements -->
-        <div class="absolute top-4 left-4 z-50 flex flex-col space-y-2">
-            <div class="flex items-center">
-                <div class="w-32 h-4 bg-gray-800 rounded-full overflow-hidden">
-                    <div id="healthBar" class="h-full bg-green-500 rounded-full"
-                        style="width: 100%; transition: width 0.3s;"></div>
-                </div>
-                <span class="ml-2 text-sm font-bold">SHIELD</span>
-            </div>
-            <div class="flex items-center">
-                <div class="w-32 h-4 bg-gray-800 rounded-full overflow-hidden">
-                    <div id="energyBar" class="h-full bg-blue-500 rounded-full"
-                        style="width: 100%; transition: width 0.3s;"></div>
-                </div>
-                <span class="ml-2 text-sm font-bold">ENERGY</span>
-            </div>
-            <div class="flex items-center">
-                <div class="w-32 h-4 bg-gray-800 rounded-full overflow-hidden">
-                    <div id="dashCooldownBar" class="h-full bg-purple-500 rounded-full"
-                        style="width: 0%; transition: width 0.3s;"></div>
-                </div>
-                <span class="ml-2 text-sm font-bold">DASH</span>
-            </div>
-        </div>
-
-        <div class="absolute top-4 right-4 z-50 text-right">
-            <div class="text-2xl font-bold" id="score">0</div>
-            <div class="text-sm">SCORE</div>
-        </div>
-
-        <!-- Loading Screen -->
-        <div id="loadingScreen" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black">
-            <h1 class="text-4xl font-bold mb-8 text-blue-400">LOADING...</h1>
-            <div class="w-64 h-4 bg-gray-800 rounded-full overflow-hidden">
-                <div id="loadingProgress" class="h-full bg-blue-500 rounded-full"
-                    style="width: 0%; transition: width 0.3s;"></div>
-            </div>
-            <div class="mt-4 text-gray-400">
-                <span id="loadingText">Loading assets...</span>
-            </div>
-        </div>
-
-        <!-- Main Menu -->
-        <!-- Main Menu -->
-        <div id="mainMenu" class="absolute inset-0 z-50 flex flex-col items-center justify-center hidden">
-            <div class="glass-panel flex flex-col items-center">
-                <div class="title-container">
-                    <h1 class="main-title">STELLAR<br>CONFLICT</h1>
-                    <div class="subtitle">Tactical Space Combat</div>
-                </div>
-
-                <div class="flex flex-col space-y-6 w-72">
-                    <button id="startGame" class="menu-button">
-                        Start Mission
-                    </button>
-                    <button id="controlsButton" class="menu-button">
-                        Controls
-                    </button>
-                    <button id="aboutButton" class="menu-button">
-                        About
-                    </button>
-                </div>
-
-                <div class="mt-8 text-center">
-                    <p class="neon-text-purple text-sm tracking-widest">SYSTEM ONLINE</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Game Over Screen -->
-        <!-- Game Over Screen -->
-        <div id="gameOver"
-            class="absolute inset-0 z-50 flex-col items-center justify-center bg-black bg-opacity-80 hidden">
-            <div class="glass-panel flex flex-col items-center">
-                <div class="title-container">
-                    <h1 class="main-title"
-                        style="font-size: 3.5rem; color: #ff4444; background: none; -webkit-text-fill-color: #ff4444; text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);">
-                        MISSION<br>FAILED</h1>
-                    <div class="subtitle" style="color: #ff4444; opacity: 0.8;">Systems Critical</div>
-                </div>
-
-                <div class="text-2xl mb-8 font-bold tracking-widest text-[#bc13fe]">
-                    FINAL SCORE: <span id="finalScore"
-                        class="text-[#00f3ff] text-3xl ml-2 drop-shadow-[0_0_10px_rgba(0,243,255,0.5)]">0</span>
-                </div>
-
-                <div class="flex flex-col space-y-4 w-64">
-                    <button id="restartGame" class="menu-button">
-                        RETRY MISSION
-                    </button>
-                    <button id="returnToMenu" class="menu-button">
-                        ABORT TO MENU
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mobile Controls -->
-        <div id="mobileControls" class="hidden">
-            <div class="mobile-btn" id="leftBtn"><i class="fas fa-arrow-left"></i></div>
-            <div class="mobile-btn" id="rightBtn"><i class="fas fa-arrow-right"></i></div>
-            <div class="mobile-btn" id="upBtn"><i class="fas fa-arrow-up"></i></div>
-            <div class="mobile-btn" id="downBtn"><i class="fas fa-arrow-down"></i></div>
-            <div class="mobile-btn" id="fireBtn"><i class="fas fa-fire"></i></div>
-            <div class="mobile-btn" id="dashBtn"><i class="fas fa-bolt"></i></div>
-        </div>
+    <!-- Parallax Background -->
+    <div class="parallax-background" aria-hidden="true">
+        <div class="parallax-layer" id="bgLayer1"></div>
+        <div class="parallax-layer" id="bgLayer2"></div>
+        <div class="parallax-layer" id="bgLayer3"></div>
     </div>
 
-    <!-- Audio Elements -->
-    <audio id="laserSound" src="/assets/laserSound.wav"></audio>
-    <audio id="explosionSound" src="/assets/explosionSound.wav"></audio>
-    <audio id="powerupSound" src="/assets/powerupSound.wav"></audio>
-    <audio id="startMissionSound" src="/assets/SpaceMusicPack/fx/startLevel.wav"></audio>
-    <audio id="bgMusic" loop src="/assets/SpaceMusicPack/battle.wav"></audio>
-    <audio id="bgMenuMusic" loop src="/assets/SpaceMusicPack/menu.wav"></audio>
+    <!-- Subtle scanline overlay -->
+    <div class="scanlines" aria-hidden="true"></div>
 
-    <!-- Main Script -->
-    <script type="module" src="/src/scripts/index.js"></script>
+    <!-- Game Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- ── GAME HUD ─────────────────────────────────────────── -->
+    <div id="gameHUD" class="game-hud">
+
+        <!-- Left: stat bars -->
+        <div class="hud-stats">
+            <div class="hud-stat-row">
+                <i class="fas fa-shield-alt hud-icon icon-shield"></i>
+                <div class="hud-bar-group">
+                    <span class="hud-bar-label">SHIELD</span>
+                    <div class="hud-bar-track">
+                        <div id="healthBar" class="hud-bar-fill fill-shield"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="hud-stat-row">
+                <i class="fas fa-bolt hud-icon icon-energy"></i>
+                <div class="hud-bar-group">
+                    <span class="hud-bar-label">ENERGY</span>
+                    <div class="hud-bar-track">
+                        <div id="energyBar" class="hud-bar-fill fill-energy"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="hud-stat-row">
+                <i class="fas fa-wind hud-icon icon-dash"></i>
+                <div class="hud-bar-group">
+                    <span class="hud-bar-label">DASH</span>
+                    <div class="hud-bar-track">
+                        <div id="dashCooldownBar" class="hud-bar-fill fill-dash"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: score + level -->
+        <div class="hud-score-panel">
+            <div class="score-label-text">SCORE</div>
+            <div id="score" class="score-digits">0</div>
+            <div class="level-badge">
+                <span class="level-text">LVL</span>
+                <span id="levelDisplay" class="level-number">01</span>
+            </div>
+        </div>
+
+    </div>
+    <!-- ── /GAME HUD ─────────────────────────────────────────── -->
+
+    <!-- ── LOADING SCREEN ─────────────────────────────────────── -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-inner">
+            <div class="loading-emblem">
+                <div class="loading-ring ring-outer"></div>
+                <div class="loading-ring ring-middle"></div>
+                <div class="loading-ring ring-inner"></div>
+                <svg class="loading-ship-icon" viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="30,4 56,72 30,58 4,72"
+                        fill="rgba(255,140,0,0.12)" stroke="#FF8C00" stroke-width="1.5" stroke-linejoin="round"/>
+                    <polygon points="30,20 46,68 30,56 14,68" fill="rgba(255,140,0,0.25)"/>
+                    <circle cx="30" cy="36" r="4" fill="#FF8C00" opacity="0.9"/>
+                    <line x1="30" y1="58" x2="30" y2="78" stroke="#FF8C00" stroke-width="1" opacity="0.35"/>
+                </svg>
+            </div>
+
+            <h1 class="loading-title">STELLAR<br>CONFLICT</h1>
+
+            <div class="loading-bar-wrap">
+                <div class="loading-bar-track">
+                    <div id="loadingProgress" class="loading-bar-fill"></div>
+                    <div class="loading-bar-glint"></div>
+                </div>
+                <div class="loading-bar-ticks">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+
+            <p id="loadingText" class="loading-status">Initializing systems...</p>
+        </div>
+    </div>
+    <!-- ── /LOADING SCREEN ─────────────────────────────────────── -->
+
+    <!-- ── MAIN MENU ───────────────────────────────────────────── -->
+    <div id="mainMenu" class="screen-overlay">
+        <div class="glass-panel menu-panel">
+            <div class="panel-corner tl"></div>
+            <div class="panel-corner tr"></div>
+            <div class="panel-corner bl"></div>
+            <div class="panel-corner br"></div>
+
+            <div class="menu-header">
+                <h1 id="menuTitle" class="main-title">STELLAR<br>CONFLICT</h1>
+                <p id="menuSubtitle" class="menu-subtitle">Tactical Space Combat</p>
+                <div class="title-divider">
+                    <span></span><i class="fas fa-star-of-life"></i><span></span>
+                </div>
+            </div>
+
+            <div class="menu-buttons" id="menuButtons">
+                <button id="startGame" class="menu-btn btn-primary">
+                    <i class="fas fa-rocket btn-icon"></i>
+                    <span>Start Mission</span>
+                    <div class="btn-glow"></div>
+                </button>
+                <button id="controlsButton" class="menu-btn">
+                    <i class="fas fa-gamepad btn-icon"></i>
+                    <span>Controls</span>
+                    <div class="btn-glow"></div>
+                </button>
+                <button id="aboutButton" class="menu-btn">
+                    <i class="fas fa-info-circle btn-icon"></i>
+                    <span>About</span>
+                    <div class="btn-glow"></div>
+                </button>
+            </div>
+
+            <div class="menu-footer">
+                <span class="system-status">
+                    <span class="status-dot"></span>SYSTEM ONLINE
+                </span>
+                <span class="version-tag">v1.0</span>
+            </div>
+        </div>
+    </div>
+    <!-- ── /MAIN MENU ───────────────────────────────────────────── -->
+
+    <!-- ── GAME OVER ────────────────────────────────────────────── -->
+    <div id="gameOver" class="screen-overlay">
+        <div class="glass-panel gameover-panel">
+            <div class="panel-corner tl danger"></div>
+            <div class="panel-corner tr danger"></div>
+            <div class="panel-corner bl danger"></div>
+            <div class="panel-corner br danger"></div>
+
+            <h1 id="gameoverTitle" class="gameover-title">MISSION<br>FAILED</h1>
+            <p class="gameover-subtitle">Systems Critical</p>
+
+            <div id="highScoresBadge" class="new-high-score-badge">
+                <i class="fas fa-trophy"></i>&nbsp;NEW HIGH SCORE
+            </div>
+
+            <div class="final-score-wrap">
+                <div class="final-score-label">FINAL SCORE</div>
+                <div id="finalScore" class="final-score-value">0</div>
+            </div>
+
+            <div class="gameover-buttons">
+                <button id="restartGame" class="menu-btn btn-primary">
+                    <i class="fas fa-redo btn-icon"></i>
+                    <span>Retry Mission</span>
+                    <div class="btn-glow"></div>
+                </button>
+                <button id="returnToMenu" class="menu-btn">
+                    <i class="fas fa-home btn-icon"></i>
+                    <span>Abort to Menu</span>
+                    <div class="btn-glow"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- ── /GAME OVER ────────────────────────────────────────────── -->
+
+    <!-- ── MOBILE CONTROLS ──────────────────────────────────────── -->
+    <div id="mobileControls" class="mobile-controls">
+        <div class="mobile-dpad">
+            <div class="mobile-btn" id="upBtn"><i class="fas fa-arrow-up"></i></div>
+            <div class="mobile-btn" id="leftBtn"><i class="fas fa-arrow-left"></i></div>
+            <div class="mobile-btn" id="rightBtn"><i class="fas fa-arrow-right"></i></div>
+            <div class="mobile-btn" id="downBtn"><i class="fas fa-arrow-down"></i></div>
+        </div>
+        <div class="mobile-actions">
+            <div class="mobile-btn mobile-fire" id="fireBtn"><i class="fas fa-fire"></i></div>
+            <div class="mobile-btn mobile-dash" id="dashBtn"><i class="fas fa-bolt"></i></div>
+        </div>
+    </div>
+    <!-- ── /MOBILE CONTROLS ─────────────────────────────────────── -->
+
+</div><!-- #gameContainer -->
+
+<!-- Audio -->
+<audio id="laserSound"       src="/assets/laserSound.wav"></audio>
+<audio id="explosionSound"   src="/assets/explosionSound.wav"></audio>
+<audio id="powerupSound"     src="/assets/powerupSound.wav"></audio>
+<audio id="startMissionSound" src="/assets/SpaceMusicPack/fx/startLevel.wav"></audio>
+<audio id="bgMusic"    loop  src="/assets/SpaceMusicPack/battle.wav"></audio>
+<audio id="bgMenuMusic" loop src="/assets/SpaceMusicPack/menu.wav"></audio>
+
+<script type="module" src="/src/scripts/index.js"></script>
 </body>
-
 </html>

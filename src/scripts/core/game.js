@@ -92,13 +92,13 @@ export class Game {
             const gameContainer = document.getElementById('gameContainer');
             canvas.width = gameContainer.clientWidth;
             canvas.height = gameContainer.clientHeight;
-            
-            // Create renderer
-            this.renderer = new GameRenderer(canvas, ctx, this.assetManager);
-            
+
             // Initialize asset manager and load assets
             this.assetManager = new AssetManager();
             await this.assetManager.loadAll();
+
+            // Create renderer
+            this.renderer = new GameRenderer(canvas, ctx, this.assetManager);
             
             this.createStars();
             

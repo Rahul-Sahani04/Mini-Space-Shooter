@@ -12,6 +12,7 @@ export const GAME_CONFIG = {
         INITIAL_ENERGY: 100,
         ENERGY_REGEN: 0.4,
         SHOOT_COST: 10,
+        SHOOT_COOLDOWN: 15,
         UPGRADE_THRESHOLD: 1000,
         MAX_LEVEL: 20,
     },
@@ -180,17 +181,20 @@ export const INITIAL_GAME_STATE = {
     maxDashCooldown: GAME_CONFIG.DASH.MAX_COOLDOWN,
     lastComboTime: 0,
     comboCount: 0,
-    comboCount: 0,
     comboTimeout: GAME_CONFIG.COMBO.TIMEOUT,
     
     // Upgrade System
     playerLevel: 1,
     nextUpgradeScore: GAME_CONFIG.PLAYER.UPGRADE_THRESHOLD,
     stats: {
-        damage: GAME_CONFIG.PLAYER.DAMAGE,
-        fireRate: GAME_CONFIG.PLAYER.SHOOT_COOLDOWN || 15,
-        maxHealth: GAME_CONFIG.PLAYER.INITIAL_HEALTH,
-        maxEnergy: GAME_CONFIG.PLAYER.INITIAL_ENERGY,
-        energyRegen: GAME_CONFIG.PLAYER.ENERGY_REGEN
+        damage:             GAME_CONFIG.PLAYER.DAMAGE,
+        fireRate:           GAME_CONFIG.PLAYER.SHOOT_COOLDOWN,
+        maxHealth:          GAME_CONFIG.PLAYER.INITIAL_HEALTH,
+        maxEnergy:          GAME_CONFIG.PLAYER.INITIAL_ENERGY,
+        energyRegen:        GAME_CONFIG.PLAYER.ENERGY_REGEN,
+        speedMult:          1.0,
+        shieldRegen:        0,
+        piercingShots:      false,
+        multiShotPermanent: false,
     }
 };

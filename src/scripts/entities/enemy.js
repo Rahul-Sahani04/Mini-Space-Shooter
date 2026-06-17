@@ -2,10 +2,12 @@ import { GAME_CONFIG } from '../utils/constants.js';
 import { Projectile } from './projectile.js';
 import { Explosion } from './explosion.js';
 import { PowerUp } from './powerup.js';
+import { showDamageNumber } from '../utils/helpers.js';
 
 export class Enemy {
     constructor(game, type = 'red', difficultyMultiplier = 1) {
         this.game = game;
+        this.canvas = document.getElementById('gameCanvas');
         this.frames = game.assetManager.getSprite(`enemy${type}`);
         if (!this.frames || !Array.isArray(this.frames) || this.frames.length === 0) {
             console.error(`Enemy sprite frames missing or empty for type: ${type}. Using placeholder.`);
@@ -19,9 +21,7 @@ export class Enemy {
     }
 
     reset(type, difficultyMultiplier = 1) {
-        const canvas = document.getElementById('gameCanvas');
-        
-        this.x = Math.random() * (canvas.width - GAME_CONFIG.ENEMY.WIDTH);
+        this.x = Math.random() * (this.canvas.width - GAME_CONFIG.ENEMY.WIDTH);
         this.y = -GAME_CONFIG.ENEMY.HEIGHT;
         this.type = type;
         
@@ -63,9 +63,8 @@ export class Enemy {
         }
 
         // Clamp position to canvas bounds
-        const canvas = document.getElementById('gameCanvas');
-        this.x = Math.max(0, Math.min(this.x, canvas.width - this.width));
-        this.y = Math.max(-this.height, Math.min(this.y, canvas.height));
+        this.x = Math.max(0, Math.min(this.x, this.canvas.width - this.width));
+        this.y = Math.max(-this.height, Math.min(this.y, this.canvas.height));
 
         // Ensure frames are valid
         if (!this.frames || !Array.isArray(this.frames) || this.frames.length === 0) return;
@@ -128,7 +127,7 @@ export class Enemy {
             // Energy gain with combo bonus
             const energyGain = GAME_CONFIG.COMBO.ENERGY_GAIN *
                                  (1 + (multiplier - 1) * 0.2); // 20% bonus per combo level
-            gameState.energy = Math.min(200, gameState.energy + energyGain);
+            gameState.energy = Math.min(gameState.stats.maxEnergy, gameState.energy + energyGain);
 
             // Create explosion effect
             this.createExplosion(gameState);
@@ -142,14 +141,7 @@ export class Enemy {
     }
 
     showDamageNumber(amount) {
-        const damageText = document.createElement('div');
-        damageText.className = 'damage-number';
-        damageText.textContent = `-${amount}`;
-        damageText.style.left = `${this.x}px`;
-        damageText.style.top = `${this.y}px`;
-        document.getElementById('gameContainer').appendChild(damageText);
-        
-        setTimeout(() => damageText.remove(), 800);
+        showDamageNumber(amount, this.x, this.y);
     }
 
     createExplosion(gameState) {

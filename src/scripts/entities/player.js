@@ -1,5 +1,6 @@
 import { GAME_CONFIG } from '../utils/constants.js';
 import { Projectile } from './projectile.js';
+import { showDamageNumber } from '../utils/helpers.js';
 
 export class Player {
     constructor(assetManager) {
@@ -31,15 +32,15 @@ export class Player {
         this.frameDelay = 25;
         this.frameTimer = 0;
 
+        this.canvas = document.getElementById('gameCanvas');
+
         // Reset position
         this.resetPosition();
     }
 
     resetPosition() {
-        // Position player at bottom center of screen
-        const canvas = document.getElementById('gameCanvas');
-        this.x = canvas.width / 2;
-        this.y = canvas.height - 100;
+        this.x = this.canvas.width / 2;
+        this.y = this.canvas.height - 100;
     }
 
     update(gameState, keys) {
@@ -60,15 +61,16 @@ export class Player {
             gameState.dashCooldown = GAME_CONFIG.DASH.MAX_COOLDOWN;
         }
 
+        const baseSpeed = this.speed * (gameState.stats.speedMult ?? 1);
         if (this.isDashing) {
-            this.currentSpeed = this.speed + (this.dashSpeed - this.speed) *
+            this.currentSpeed = baseSpeed + (this.dashSpeed - baseSpeed) *
                               (this.dashTimer / this.dashDuration);
             this.dashTimer--;
             if (this.dashTimer <= 0) {
                 this.isDashing = false;
             }
         } else {
-            this.currentSpeed = this.speed;
+            this.currentSpeed = baseSpeed;
         }
 
         // Update multishot timer
@@ -79,16 +81,23 @@ export class Player {
             }
         }
 
+        // Passive shield regen (upgrade stat)
+        if (gameState.stats.shieldRegen > 0) {
+            gameState.health = Math.min(
+                gameState.stats.maxHealth,
+                gameState.health + gameState.stats.shieldRegen
+            );
+        }
+
         // Update movement
-        const canvas = document.getElementById('gameCanvas');
         if (keys.ArrowLeft && this.x > 0) this.x -= this.currentSpeed;
-        if (keys.ArrowRight && this.x < canvas.width - this.width) this.x += this.currentSpeed;
+        if (keys.ArrowRight && this.x < this.canvas.width - this.width) this.x += this.currentSpeed;
         if (keys.ArrowUp && this.y > 0) this.y -= this.currentSpeed;
-        if (keys.ArrowDown && this.y < canvas.height - this.height) this.y += this.currentSpeed;
+        if (keys.ArrowDown && this.y < this.canvas.height - this.height) this.y += this.currentSpeed;
 
         // Clamp position to canvas bounds
-        this.x = Math.max(0, Math.min(this.x, canvas.width - this.width));
-        this.y = Math.max(0, Math.min(this.y, canvas.height - this.height));
+        this.x = Math.max(0, Math.min(this.x, this.canvas.width - this.width));
+        this.y = Math.max(0, Math.min(this.y, this.canvas.height - this.height));
 
         // Ensure frames are valid
         if (!this.frames || !Array.isArray(this.frames) || this.frames.length === 0) return;
@@ -106,28 +115,15 @@ export class Player {
             // Get projectile from pool or create new one
             const projectile = game.objectPools.getFromPool('projectiles') ||
                 new Projectile(this.x, this.y - this.height / 2, 'player', game);
-
-            if (!projectile.fromPool) {
-                projectile.reset(this.x, this.y - this.height / 2, 'player');
-            }
-
-            if (!projectile.fromPool) {
-                projectile.reset(this.x, this.y - this.height / 2, 'player');
-            }
+            projectile.reset(this.x, this.y - this.height / 2, 'player');
             gameState.projectiles.push(projectile);
 
-            // Handle multishot
-            if (this.multiShotActive) {
+            // Handle multishot (powerup or permanent upgrade)
+            if (this.multiShotActive || gameState.stats.multiShotPermanent) {
                 [-0.2, 0.2].forEach(angle => {
                     const extraProj = game.objectPools.getFromPool('projectiles') ||
                         new Projectile(this.x, this.y - this.height / 2, 'player', game);
-                    
-                    if (!extraProj.fromPool) {
-                        extraProj.reset(this.x, this.y - this.height / 2, 'player', angle);
-                    } else {
-                        // Reset pooled projectile with angle
-                        extraProj.reset(this.x, this.y - this.height / 2, 'player', angle);
-                    }
+                    extraProj.reset(this.x, this.y - this.height / 2, 'player', angle);
                     gameState.projectiles.push(extraProj);
                 });
             }
@@ -174,14 +170,7 @@ export class Player {
     }
 
     showDamageNumber(amount) {
-        const damageText = document.createElement('div');
-        damageText.className = 'damage-number';
-        damageText.textContent = `-${amount}`;
-        damageText.style.left = `${this.x}px`;
-        damageText.style.top = `${this.y}px`;
-        document.getElementById('gameContainer').appendChild(damageText);
-        
-        setTimeout(() => damageText.remove(), 800);
+        showDamageNumber(amount, this.x, this.y);
     }
 }
 

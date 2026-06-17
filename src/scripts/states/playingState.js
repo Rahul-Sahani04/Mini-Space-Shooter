@@ -1,4 +1,6 @@
+import { gsap } from 'gsap';
 import GameState from './gameState.js';
+import { UpgradePicker } from './upgradePicker.js';
 import { Explosion } from '../entities/explosion.js';
 import { PausedState } from './pausedState.js';
 import { GameOverState } from './gameOverState.js';
@@ -27,6 +29,8 @@ export class PlayingState extends GameState {
         document.getElementById('healthBar').style.width = '100%';
         document.getElementById('energyBar').style.width = '100%';
         document.getElementById('dashCooldownBar').style.width = '100%';
+        const lvlEl = document.getElementById('levelDisplay');
+        if (lvlEl) lvlEl.textContent = '01';
 
         // Start game music
         const bgMusic = this.game.assetManager.getAudio('bgMusic');
@@ -108,6 +112,7 @@ export class PlayingState extends GameState {
 
     update() {
         if (this.game.gameState.isGameOver) return;
+        if (this._upgradePicker) return;  // freeze while upgrade screen is open
 
         // Update tutorial
         this.game.tutorial.update();
@@ -133,7 +138,7 @@ export class PlayingState extends GameState {
         }
         if (this.game.keys['Space'] && gameState.shootCooldown === 0) {
             if (this.game.player.shoot(gameState, this.game)) {
-                gameState.shootCooldown = GAME_CONFIG.PLAYER.SHOOT_COOLDOWN || 10;
+                gameState.shootCooldown = gameState.stats.fireRate;
             }
         }
         if (gameState.shootCooldown > 0) {
@@ -212,11 +217,8 @@ export class PlayingState extends GameState {
         gameState.projectiles.forEach(projectile => {
             if (projectile.type === 'player') {
                 gameState.enemies.forEach(enemy => {
-                    if (
-                        projectile.active &&
-                        checkCollision(projectile, enemy)
-                    ) {
-                        projectile.active = false;
+                    if (projectile.active && checkCollision(projectile, enemy)) {
+                        if (!gameState.stats.piercingShots) projectile.active = false;
                         enemy.takeDamage(gameState.stats.damage, gameState);
                     }
                 });
@@ -279,71 +281,37 @@ export class PlayingState extends GameState {
 
     handlePlayerUpgrade() {
         const gameState = this.game.gameState;
-        
-        // Increase requirement for next upgrade
+
         gameState.nextUpgradeScore += GAME_CONFIG.PLAYER.UPGRADE_THRESHOLD;
         gameState.playerLevel++;
 
-        // Guaranteed Energy Regen Boost (per user request)
-        gameState.stats.energyRegen += 0.2;
-
-        // Randomly select upgrade type (removed 'energyRegen' as it's now guaranteed)
-        const upgradeTypes = ['damage', 'fireRate', 'maxStats'];
-        const type = upgradeTypes[Math.floor(Math.random() * upgradeTypes.length)];
-        
-        let message = '';
-        
-        switch(type) {
-            case 'damage':
-                gameState.stats.damage += 5;
-                message = 'DAMAGE & REGEN UPGRADED';
-                break;
-            case 'fireRate':
-                gameState.stats.fireRate = Math.max(5, gameState.stats.fireRate - 1);
-                message = 'FIRE RATE & REGEN UPGRADED';
-                break;
-            case 'maxStats':
-                gameState.stats.maxHealth += 20;
-                gameState.stats.maxEnergy += 20;
-                gameState.health += 20; // Heal amount added
-                gameState.energy += 20;
-                message = 'CAPACITY & REGEN UPGRADED';
-                break;
+        const levelEl = document.getElementById('levelDisplay');
+        if (levelEl) {
+            levelEl.textContent = String(gameState.playerLevel).padStart(2, '0');
+            gsap.from(levelEl, { scale: 1.6, opacity: 0, duration: 0.4, ease: 'back.out(2)' });
         }
 
-        // Show upgrade notification
-        this.showUpgradeNotification(message);
-        
-        // Play upgrade sound
-        const powerupSound = this.game.assetManager.getAudio('powerup');
-        if (powerupSound) {
-            powerupSound.volume = 0.6;
-            powerupSound.currentTime = 0;
-            powerupSound.play().catch(() => {});
-        }
+        this._upgradePicker = new UpgradePicker(this.game, (upgrade) => {
+            upgrade.apply(gameState);
+            this._upgradePicker = null;
+
+            // Notify which upgrade was taken
+            this._showUpgradeToast(upgrade.label);
+
+            const snd = this.game.assetManager.getAudio('powerup');
+            if (snd) { snd.volume = 0.6; snd.currentTime = 0; snd.play().catch(() => {}); }
+        });
     }
 
-    showUpgradeNotification(text) {
-        const notification = document.createElement('div');
-        notification.className = 'upgrade-notification';
-        notification.textContent = text;
-        
-        // Style handled in CSS or JS, injecting basic style here ensuring visibility
-        notification.style.position = 'absolute';
-        notification.style.top = '20%';
-        notification.style.left = '50%';
-        notification.style.transform = 'translate(-50%, -50%)';
-        notification.style.color = '#00f3ff';
-        notification.style.fontSize = '24px';
-        notification.style.fontWeight = 'bold';
-        notification.style.textShadow = '0 0 10px #00f3ff';
-        notification.style.zIndex = '100';
-        notification.style.pointerEvents = 'none';
-        notification.style.animation = 'fadeUp 2s ease-out forwards';
-        
-        document.getElementById('gameContainer').appendChild(notification);
-        
-        setTimeout(() => notification.remove(), 2000);
+    _showUpgradeToast(label) {
+        const el = document.createElement('div');
+        el.className = 'upgrade-notification';
+        el.textContent = label;
+        document.getElementById('gameContainer').appendChild(el);
+
+        gsap.timeline({ onComplete: () => el.remove() })
+            .from(el, { y: 20, opacity: 0, scale: 0.85, duration: 0.35, ease: 'back.out(1.8)' })
+            .to(el,   { y: -40, opacity: 0, duration: 0.5, ease: 'power2.in', delay: 1.2 });
     }
 
     cleanupEffects() {

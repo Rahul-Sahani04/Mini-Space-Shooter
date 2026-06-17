@@ -1,111 +1,154 @@
+import { gsap } from 'gsap';
 import GameState from './gameState.js';
 import { PlayingState } from './playingState.js';
 
 export class MenuState extends GameState {
     enter() {
-        // Show menu UI
-        document.getElementById('mainMenu').style.display = 'flex';
-        document.getElementById('gameOver').style.display = 'none';
-        
-        // Menu initialization code
+        const menu = document.getElementById('mainMenu');
+        menu.style.display = 'flex';
 
-        // Set up event listeners
-        this.setupEventListeners();
-        
-        // Add menu animations
-        this.setupMenuAnimation();
+        // Wire buttons (replace previous handlers cleanly)
+        document.getElementById('startGame').onclick = () => {
+            this._exitAnimate(() => this.game.setState(new PlayingState(this.game)));
+        };
+        document.getElementById('controlsButton').onclick = () => this.showControls();
+        document.getElementById('aboutButton').onclick    = () => this.showAbout();
+
+        this._enterAnimate();
+        this._setupParallax();
     }
 
     exit() {
-        // Hide menu UI
         document.getElementById('mainMenu').style.display = 'none';
-        
-        // Menu cleanup code
     }
 
-    setupEventListeners() {
-        // Start game button
-        document.getElementById('startGame').addEventListener('click', () => {
-            this.game.setState(new PlayingState(this.game));
-        });
+    _enterAnimate() {
+        const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
 
-        // Add other menu button listeners here
-        // Controls button
-        document.getElementById('controlsButton')?.addEventListener('click', () => {
-            this.showControls();
-        });
+        tl.from('#menuTitle', {
+            y: -60, opacity: 0, duration: 0.75, skewY: -4
+        })
+        .from('#menuSubtitle', {
+            opacity: 0, letterSpacing: '1.5em', duration: 0.6, ease: 'power2.out'
+        }, '-=0.35')
+        .from('.title-divider', {
+            scaleX: 0, opacity: 0, duration: 0.5, transformOrigin: 'center'
+        }, '-=0.3')
+        .from('#menuButtons .menu-btn', {
+            x: -48, opacity: 0, duration: 0.45, stagger: 0.1, ease: 'power2.out'
+        }, '-=0.2')
+        .from('.menu-footer', {
+            opacity: 0, y: 8, duration: 0.4
+        }, '-=0.15')
+        .from('.panel-corner', {
+            scale: 0, opacity: 0, duration: 0.35, stagger: 0.06, ease: 'back.out(2)'
+        }, 0.1);
+    }
 
-        // About button
-        document.getElementById('aboutButton')?.addEventListener('click', () => {
-            this.showAbout();
+    _exitAnimate(cb) {
+        gsap.to('#menuButtons .menu-btn', {
+            x: -40, opacity: 0, duration: 0.25, stagger: 0.06,
+            ease: 'power2.in', onComplete: cb
         });
     }
 
-    setupMenuAnimation() {
-        // Add parallax background effect
-        const layers = document.querySelectorAll('.parallax-layer');
-        layers.forEach((layer, index) => {
-            layer.style.animationDuration = `${20 + index * 10}s`;
+    _setupParallax() {
+        document.querySelectorAll('.parallax-layer').forEach((layer, i) => {
+            layer.style.animationDuration = `${20 + i * 12}s`;
         });
-
-        // Add title glow animation
-        const title = document.querySelector('h1');
-        if (title) {
-            title.classList.add('glow-effect');
-        }
     }
 
     showControls() {
-        const controls = document.createElement('div');
-        controls.className = 'modal';
-        controls.innerHTML = `
-            <div class="modal-content">
-                <h2
-                style="color: #4CAF50; font-size: 24px; text-align: center;"
-                >Controls</h2>
-                <ul>
-                    <li>Arrow Keys: Move ship</li>
-                    <li>Space: Fire</li>
-                    <li>Shift: Dash</li>
-                    <li>Esc: Pause game</li>
+        const overlay = document.createElement('div');
+        overlay.className = 'sc-modal-overlay';
+        overlay.innerHTML = `
+            <div class="sc-modal glass-panel">
+                <div class="panel-corner tl"></div>
+                <div class="panel-corner tr"></div>
+                <div class="panel-corner bl"></div>
+                <div class="panel-corner br"></div>
+                <h2 class="sc-modal-title">CONTROLS</h2>
+                <div class="sc-divider"></div>
+                <ul class="controls-list">
+                    <li><span class="key-badge">ARROW KEYS</span>Move ship</li>
+                    <li><span class="key-badge">SPACE</span>Fire weapons</li>
+                    <li><span class="key-badge">SHIFT</span>Dash / evade</li>
+                    <li><span class="key-badge">ESC</span>Pause mission</li>
                 </ul>
-                <button class="close-button" style="margin-top: 20px; padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 5px;">Close</button>
-            </div>
-        `;
-        document.body.appendChild(controls);
+                <button class="sc-modal-close">CLOSE</button>
+            </div>`;
 
-        controls.querySelector('.close-button').addEventListener('click', () => {
-            controls.remove();
+        document.body.appendChild(overlay);
+        gsap.from(overlay.querySelector('.sc-modal'), {
+            scale: 0.85, opacity: 0, duration: 0.35, ease: 'back.out(1.6)'
         });
+
+        const close = () => {
+            gsap.to(overlay.querySelector('.sc-modal'), {
+                scale: 0.88, opacity: 0, duration: 0.22, ease: 'power2.in',
+                onComplete: () => overlay.remove()
+            });
+        };
+        overlay.querySelector('.sc-modal-close').onclick = close;
+        overlay.onclick = (e) => { if (e.target === overlay) close(); };
     }
 
     showAbout() {
-        const about = document.createElement('div');
-        about.className = 'modal';
-        about.innerHTML = `
-            <div class="modal-content">
-                <h2 style="color: #4CAF50; font-size: 24px; text-align: center;" >About</h2>
-                <p>A space shooter game built with modern JavaScript.</p>
-                <p>Version 1.2.0</p>
-                <button class="close-button" style="margin-top: 20px; padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 5px;">Close</button>
-            </div>
-        `;
-        document.body.appendChild(about);
+        const overlay = document.createElement('div');
+        overlay.className = 'sc-modal-overlay';
+        overlay.innerHTML = `
+            <div class="sc-modal glass-panel">
+                <div class="panel-corner tl"></div>
+                <div class="panel-corner tr"></div>
+                <div class="panel-corner bl"></div>
+                <div class="panel-corner br"></div>
+                <h2 class="sc-modal-title">ABOUT</h2>
+                <div class="sc-divider"></div>
+                <div class="about-rows">
+                    <div class="about-row">
+                        <span class="about-row-label">GAME</span>
+                        <span class="about-row-value">Stellar Conflict</span>
+                    </div>
+                    <div class="about-row">
+                        <span class="about-row-label">VERSION</span>
+                        <span class="about-row-value">1.0.0</span>
+                    </div>
+                    <div class="about-row">
+                        <span class="about-row-label">ENGINE</span>
+                        <span class="about-row-value">HTML5 Canvas + GSAP</span>
+                    </div>
+                    <div class="about-row">
+                        <span class="about-row-label">ENEMIES</span>
+                        <span class="about-row-value">Red, Green, Charger</span>
+                    </div>
+                    <div class="about-row">
+                        <span class="about-row-label">BUILD</span>
+                        <span class="about-row-value">Vite + Vanilla JS</span>
+                    </div>
+                </div>
+                <button class="sc-modal-close">CLOSE</button>
+            </div>`;
 
-        about.querySelector('.close-button').addEventListener('click', () => {
-            about.remove();
+        document.body.appendChild(overlay);
+        gsap.from(overlay.querySelector('.sc-modal'), {
+            scale: 0.85, opacity: 0, duration: 0.35, ease: 'back.out(1.6)'
         });
+
+        const close = () => {
+            gsap.to(overlay.querySelector('.sc-modal'), {
+                scale: 0.88, opacity: 0, duration: 0.22, ease: 'power2.in',
+                onComplete: () => overlay.remove()
+            });
+        };
+        overlay.querySelector('.sc-modal-close').onclick = close;
+        overlay.onclick = (e) => { if (e.target === overlay) close(); };
     }
 
-    update() {
-        // Update any menu animations or effects
-    }
+    update() {}
 
     render() {
         const ctx = this.game.renderer.ctx;
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        
-        // Draw starfield
         this.game.renderer.drawStarfield(this.game.stars);
     }
 }

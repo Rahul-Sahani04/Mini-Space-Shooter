@@ -1,3 +1,13 @@
+export function showDamageNumber(amount, x, y) {
+    const damageText = document.createElement('div');
+    damageText.className = 'damage-number';
+    damageText.textContent = `-${amount}`;
+    damageText.style.left = `${x}px`;
+    damageText.style.top = `${y}px`;
+    document.getElementById('gameContainer').appendChild(damageText);
+    setTimeout(() => damageText.remove(), 800);
+}
+
 // Animation frame request with fallback
 export const requestAnimFrame = (function() {
     return window.requestAnimationFrame ||

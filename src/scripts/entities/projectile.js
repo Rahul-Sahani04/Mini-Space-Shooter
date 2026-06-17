@@ -4,6 +4,7 @@ export class Projectile {
     constructor(x, y, type, game, fromPool = false) {
         this.game = game;
         this.fromPool = fromPool;
+        this.canvas = document.getElementById('gameCanvas');
         this.reset(x, y, type);
     }
 
@@ -31,9 +32,8 @@ export class Projectile {
         this.x += Math.sin(this.angle) * Math.abs(this.speed);
         
         // Check if projectile is off screen
-        const canvas = document.getElementById('gameCanvas');
-        if (this.y < -this.height || this.y > canvas.height + this.height || 
-            this.x < -this.width || this.x > canvas.width + this.width) {
+        if (this.y < -this.height || this.y > this.canvas.height + this.height ||
+            this.x < -this.width || this.x > this.canvas.width + this.width) {
             this.active = false;
         }
     }

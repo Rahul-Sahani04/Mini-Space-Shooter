@@ -1,3 +1,4 @@
+import { gsap } from 'gsap';
 import GameState from './gameState.js';
 import { PlayingState } from './playingState.js';
 import { MenuState } from './menuState.js';
@@ -9,184 +10,172 @@ export class PausedState extends GameState {
         super(game);
         this.savedGameState = null;
         this.overlay = null;
-        this.bindedKeyHandler = this.handleKeyPress.bind(this);
+        this._keyHandler = this._handleKey.bind(this);
     }
 
     enter() {
-        // Save current game state
         this.savedGameState = { ...this.game.gameState };
-        
-        // Create and show pause menu
-        this.createPauseOverlay();
-        
-        // Pause all sounds
-        this.pauseSounds();
-        
-        // Add blur effect to game
+        this._createOverlay();
+        this._pauseSounds();
         document.getElementById('gameContainer').classList.add('game-paused');
-
-        // Add keyboard listener
-        document.addEventListener('keydown', this.bindedKeyHandler);
-
-        // Load current settings
-        this.loadSettings();
+        document.addEventListener('keydown', this._keyHandler);
+        this._loadSettings();
     }
 
     exit() {
-        // Remove pause overlay
-        if (this.overlay) {
-            this.overlay.remove();
-            this.overlay = null;
-        }
-        
-        // Remove blur effect
+        if (this.overlay) { this.overlay.remove(); this.overlay = null; }
         document.getElementById('gameContainer').classList.remove('game-paused');
-        
-        // Remove keyboard listener
-        document.removeEventListener('keydown', this.bindedKeyHandler);
+        document.removeEventListener('keydown', this._keyHandler);
     }
 
-    handleKeyPress(event) {
-        if (event.code === 'Escape') {
-            this.resumeGame();
-        }
+    _handleKey(e) {
+        if (e.code === 'Escape') this._resume();
     }
 
-    createPauseOverlay() {
+    _createOverlay() {
         this.overlay = document.createElement('div');
-        this.overlay.className = 'absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-50';
+        this.overlay.className = 'pause-overlay';
         this.overlay.innerHTML = `
-            <div class="glass-panel flex flex-col items-center">
-                <div class="title-container">
-                    <h1 class="main-title" style="font-size: 4rem;">PAUSED</h1>
-                    <div class="subtitle">Mission Suspended</div>
+            <div class="glass-panel pause-panel" id="pausePanel">
+                <div class="panel-corner tl"></div>
+                <div class="panel-corner tr"></div>
+                <div class="panel-corner bl"></div>
+                <div class="panel-corner br"></div>
+                <h1 class="pause-title">PAUSED</h1>
+                <p class="pause-subtitle">Mission Suspended</p>
+                <div class="menu-buttons">
+                    <button class="menu-btn btn-primary" id="resumeBtn">
+                        <i class="fas fa-play btn-icon"></i>
+                        <span>Resume Mission</span>
+                        <div class="btn-glow"></div>
+                    </button>
+                    <button class="menu-btn" id="optionsBtn">
+                        <i class="fas fa-sliders-h btn-icon"></i>
+                        <span>Tactical Options</span>
+                        <div class="btn-glow"></div>
+                    </button>
+                    <button class="menu-btn" id="quitBtn">
+                        <i class="fas fa-door-open btn-icon"></i>
+                        <span>Abort Mission</span>
+                        <div class="btn-glow"></div>
+                    </button>
                 </div>
-                <div class="flex flex-col space-y-6 w-72">
-                    <button id="resumeButton" class="menu-button">Resume Mission</button>
-                    <button id="optionsButton" class="menu-button">Tactical Options</button>
-                    <button id="quitButton" class="menu-button">Abort Mission</button>
-                </div>
-            </div>
-        `;
+            </div>`;
 
-        // Add event listeners
-        this.overlay.querySelector('#resumeButton').addEventListener('click', () => this.resumeGame());
-        this.overlay.querySelector('#optionsButton').addEventListener('click', () => this.showOptions());
-        this.overlay.querySelector('#quitButton').addEventListener('click', () => this.quitToMenu());
+        this.overlay.querySelector('#resumeBtn').onclick  = () => this._resume();
+        this.overlay.querySelector('#optionsBtn').onclick = () => this._showOptions();
+        this.overlay.querySelector('#quitBtn').onclick    = () => this._quit();
 
         document.getElementById('gameContainer').appendChild(this.overlay);
+
+        // Entrance animation
+        const panel = this.overlay.querySelector('#pausePanel');
+        gsap.from(panel, { scale: 0.82, opacity: 0, duration: 0.38, ease: 'back.out(1.7)' });
+        gsap.from(this.overlay.querySelectorAll('.menu-btn'), {
+            x: -36, opacity: 0, stagger: 0.1, duration: 0.38, delay: 0.15, ease: 'power2.out'
+        });
+        gsap.from(this.overlay.querySelectorAll('.panel-corner'), {
+            scale: 0, opacity: 0, stagger: 0.05, duration: 0.3, delay: 0.05, ease: 'back.out(2)'
+        });
     }
 
-    resumeGame() {
-        this.game.setState(new PlayingState(this.game));
-        this.resumeSounds();
+    _resume() {
+        gsap.to(this.overlay.querySelector('#pausePanel'), {
+            scale: 0.88, opacity: 0, duration: 0.22, ease: 'power2.in',
+            onComplete: () => {
+                this._resumeSounds();
+                this.game.setState(new PlayingState(this.game));
+            }
+        });
     }
 
-    quitToMenu() {
-        if (confirm('Are you sure you want to quit? All progress will be lost.')) {
+    _quit() {
+        if (confirm('Abort mission? All progress will be lost.')) {
             this.game.setState(new MenuState(this.game));
         }
     }
 
-    showOptions() {
+    _showOptions() {
         const settings = storage.getSettings();
-        
-        const optionsMenu = document.createElement('div');
-        optionsMenu.className = 'absolute inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80';
-        optionsMenu.innerHTML = `
-            <div class="glass-panel flex flex-col items-center">
-                <div class="title-container">
-                    <h2 class="main-title" style="font-size: 3rem;">OPTIONS</h2>
-                </div>
-                
-                <div class="w-full space-y-6 mb-8 text-white">
-                    <div class="flex flex-col space-y-2">
-                        <label for="musicVolume" class="text-cyan-400 font-bold tracking-wider">MUSIC VOLUME</label>
-                        <input type="range" id="musicVolume" min="0" max="100" value="${settings.musicVolume * 100}" class="w-full accent-cyan-500">
+        const panel = document.createElement('div');
+        panel.className = 'pause-overlay';
+        panel.innerHTML = `
+            <div class="glass-panel options-panel" id="optionsPanel">
+                <div class="panel-corner tl"></div>
+                <div class="panel-corner tr"></div>
+                <div class="panel-corner bl"></div>
+                <div class="panel-corner br"></div>
+                <h2 class="options-title">OPTIONS</h2>
+                <div class="options-grid">
+                    <div class="option-row">
+                        <label class="option-label" for="musicVolume">MUSIC VOLUME</label>
+                        <input type="range" id="musicVolume" min="0" max="100"
+                            value="${(settings.musicVolume || 0.5) * 100}">
                     </div>
-                    
-                    <div class="flex flex-col space-y-2">
-                        <label for="sfxVolume" class="text-secondary font-bold tracking-wider" style="color: #bc13fe;">SFX VOLUME</label>
-                        <input type="range" id="sfxVolume" min="0" max="100" value="${settings.sfxVolume * 100}" class="w-full accent-purple-500">
+                    <div class="option-row">
+                        <label class="option-label range-purple" for="sfxVolume"
+                            style="color: var(--c-purple)">SFX VOLUME</label>
+                        <input type="range" id="sfxVolume" min="0" max="100"
+                            class="range-purple" value="${(settings.sfxVolume || 0.8) * 100}">
                     </div>
-                    
-                    <div class="flex items-center space-x-3 mt-4">
-                        <input type="checkbox" id="showTutorial" ${settings.showTutorial ? 'checked' : ''} class="w-6 h-6 accent-cyan-500">
-                        <label for="showTutorial" class="text-white font-bold tracking-wider">SHOW TUTORIAL</label>
-                    </div>
-
-                    <div class="flex flex-col space-y-2">
-                        <label class="text-cyan-400 font-bold tracking-wider">DIFFICULTY</label>
-                        <select id="difficulty" class="bg-gray-900 border border-cyan-500 text-white p-2 rounded">
-                            <option value="easy" ${settings.difficulty === 'easy' ? 'selected' : ''}>Easy</option>
+                    <div class="option-row">
+                        <label class="option-label" for="difficulty">DIFFICULTY</label>
+                        <select id="difficulty">
+                            <option value="easy"   ${settings.difficulty === 'easy'   ? 'selected' : ''}>Easy</option>
                             <option value="normal" ${settings.difficulty === 'normal' ? 'selected' : ''}>Normal</option>
-                            <option value="hard" ${settings.difficulty === 'hard' ? 'selected' : ''}>Hard</option>
+                            <option value="hard"   ${settings.difficulty === 'hard'   ? 'selected' : ''}>Hard</option>
                         </select>
                     </div>
+                    <div class="toggle-row">
+                        <input type="checkbox" id="showTutorial" ${settings.showTutorial ? 'checked' : ''}>
+                        <label for="showTutorial">Show Tutorial</label>
+                    </div>
                 </div>
+                <button class="sc-modal-close" id="saveOptions">SAVE & CLOSE</button>
+            </div>`;
 
-                <button id="closeOptions" class="menu-button">Save & Close</button>
-            </div>
-        `;
-
-        // Add event listeners
-        optionsMenu.querySelector('#musicVolume').addEventListener('input', (e) => {
-            const volume = e.target.value / 100;
-            audioManager.setMusicVolume(volume);
+        panel.querySelector('#musicVolume').addEventListener('input', (e) => {
+            audioManager.setMusicVolume(e.target.value / 100);
         });
-
-        optionsMenu.querySelector('#sfxVolume').addEventListener('input', (e) => {
-            const volume = e.target.value / 100;
-            audioManager.setSFXVolume(volume);
+        panel.querySelector('#sfxVolume').addEventListener('input', (e) => {
+            audioManager.setSFXVolume(e.target.value / 100);
         });
-
-        optionsMenu.querySelector('#closeOptions').addEventListener('click', () => {
-            this.saveSettings(optionsMenu);
-            optionsMenu.remove();
-        });
-
-        document.getElementById('gameContainer').appendChild(optionsMenu);
-    }
-
-    loadSettings() {
-        const settings = storage.getSettings();
-        audioManager.setMusicVolume(settings.musicVolume);
-        audioManager.setSFXVolume(settings.sfxVolume);
-    }
-
-    saveSettings(optionsMenu) {
-        const settings = {
-            musicVolume: optionsMenu.querySelector('#musicVolume').value / 100,
-            sfxVolume: optionsMenu.querySelector('#sfxVolume').value / 100,
-            showTutorial: optionsMenu.querySelector('#showTutorial').checked,
-            difficulty: optionsMenu.querySelector('#difficulty').value
+        panel.querySelector('#saveOptions').onclick = () => {
+            storage.saveSettings({
+                musicVolume:  panel.querySelector('#musicVolume').value  / 100,
+                sfxVolume:    panel.querySelector('#sfxVolume').value    / 100,
+                showTutorial: panel.querySelector('#showTutorial').checked,
+                difficulty:   panel.querySelector('#difficulty').value
+            });
+            gsap.to(panel.querySelector('#optionsPanel'), {
+                scale: 0.88, opacity: 0, duration: 0.2, ease: 'power2.in',
+                onComplete: () => panel.remove()
+            });
         };
-        
-        storage.saveSettings(settings);
+
+        document.getElementById('gameContainer').appendChild(panel);
+        gsap.from(panel.querySelector('#optionsPanel'), {
+            scale: 0.84, opacity: 0, duration: 0.35, ease: 'back.out(1.7)'
+        });
     }
 
-    pauseSounds() {
-        audioManager.pauseAll();
+    _loadSettings() {
+        const settings = storage.getSettings();
+        audioManager.setMusicVolume(settings.musicVolume ?? 0.5);
+        audioManager.setSFXVolume(settings.sfxVolume ?? 0.8);
     }
 
-    resumeSounds() {
-        audioManager.resumeAll();
-    }
+    _pauseSounds()  { audioManager.pauseAll(); }
+    _resumeSounds() { audioManager.resumeAll(); }
 
     update() {
-        // Still update visual effects like particles
-        if (this.game.gameState.explosions.length > 0) {
-            this.game.gameState.explosions.forEach(explosion => explosion.update());
-        }
+        this.game.gameState.explosions.forEach(ex => ex.update());
     }
 
     render() {
-        // Keep rendering the paused game state
         this.game.renderer.render(this.savedGameState, this.game.player);
-
-        // Add pause overlay effect
         const ctx = this.game.renderer.ctx;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     }
 }

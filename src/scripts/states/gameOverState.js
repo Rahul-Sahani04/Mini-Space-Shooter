@@ -1,3 +1,4 @@
+import { gsap } from 'gsap';
 import GameState from './gameState.js';
 import { MenuState } from './menuState.js';
 import { PlayingState } from './playingState.js';
@@ -6,162 +7,146 @@ import achievementManager from '../utils/achievements.js';
 
 export class GameOverState extends GameState {
     enter() {
-        // Show game over screen
-        document.getElementById('gameOver').style.display = 'flex';
-        document.getElementById('finalScore').textContent = this.game.gameState.score;
-        
-        // Add game over effects
-        this.addGameOverEffects();
+        const screen = document.getElementById('gameOver');
+        screen.style.display = 'flex';
 
-        // Stop game music and play game over sound
-        const bgMusic = this.game.assetManager.getAudio('bgMusic');
-        if (bgMusic) {
-            bgMusic.pause();
-            bgMusic.currentTime = 0;
-        }
-
-        // Update high scores
-        this.updateHighScores();
-
-        // Update game statistics
-        this.updateGameStats();
-
-        // Setup event listeners
-        this.setupEventListeners();
+        this._addEffects();
+        this._updateHighScores();
+        this._updateGameStats();
+        this._setupButtons();
+        this._animate();
     }
 
     exit() {
-        // Hide game over screen
         document.getElementById('gameOver').style.display = 'none';
-
-        // Clean up effects
-        this.cleanupEffects();
-
-        // Remove event listeners
-        this.removeEventListeners();
+        this._cleanupEffects();
+        document.getElementById('restartGame').onclick  = null;
+        document.getElementById('returnToMenu').onclick = null;
+        // Reset high score badge for next time
+        document.getElementById('highScoresBadge').style.display = 'none';
     }
 
-    setupEventListeners() {
-        // Restart button
-        this.restartHandler = () => this.game.setState(new PlayingState(this.game));
-        document.getElementById('restartGame').addEventListener('click', this.restartHandler);
-
-        // Menu button
-        this.menuHandler = () => this.game.setState(new MenuState(this.game));
-        document.getElementById('returnToMenu')?.addEventListener('click', this.menuHandler);
+    _setupButtons() {
+        document.getElementById('restartGame').onclick = () => {
+            gsap.to('.gameover-panel', {
+                scale: 0.88, opacity: 0, duration: 0.28, ease: 'power2.in',
+                onComplete: () => this.game.setState(new PlayingState(this.game))
+            });
+        };
+        document.getElementById('returnToMenu').onclick = () => {
+            gsap.to('.gameover-panel', {
+                scale: 0.88, opacity: 0, duration: 0.28, ease: 'power2.in',
+                onComplete: () => this.game.setState(new MenuState(this.game))
+            });
+        };
     }
 
-    removeEventListeners() {
-        document.getElementById('restartGame').removeEventListener('click', this.restartHandler);
-        document.getElementById('returnToMenu')?.removeEventListener('click', this.menuHandler);
-    }
-
-    updateHighScores() {
+    _animate() {
         const score = this.game.gameState.score;
-        
-        // Check if it's a new high score
+        const counter = { val: 0 };
+
+        const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+        tl.from('.gameover-panel', {
+            scale: 1.08, opacity: 0, duration: 0.5
+        })
+        .from('#gameoverTitle', {
+            y: -30, opacity: 0, duration: 0.55, ease: 'power4.out'
+        }, '-=0.25')
+        .from('.gameover-subtitle', {
+            opacity: 0, duration: 0.4
+        }, '-=0.2')
+        .from('.final-score-label', {
+            opacity: 0, y: 10, duration: 0.4
+        }, '-=0.1')
+        .to(counter, {
+            val: score,
+            duration: 1.4,
+            ease: 'power2.out',
+            onUpdate: () => {
+                document.getElementById('finalScore').textContent =
+                    Math.round(counter.val).toLocaleString();
+            }
+        }, '-=0.1')
+        .from('.gameover-buttons .menu-btn', {
+            y: 24, opacity: 0, stagger: 0.12, duration: 0.45, ease: 'back.out(1.6)'
+        }, '-=0.6')
+        .from('.panel-corner', {
+            scale: 0, opacity: 0, duration: 0.3, stagger: 0.05, ease: 'back.out(2)'
+        }, 0.1);
+
+        // Glitch pulse on title
+        gsap.to('#gameoverTitle', {
+            textShadow: '0 0 40px rgba(255,45,85,0.8), 0 0 80px rgba(255,45,85,0.4)',
+            duration: 0.8, repeat: -1, yoyo: true, delay: 0.6, ease: 'sine.inOut'
+        });
+    }
+
+    _updateHighScores() {
+        const score = this.game.gameState.score;
         if (storage.isNewHighScore(score)) {
             storage.saveHighScore(score);
-            this.showNewHighScoreEffect();
+            // Reveal badge with animation after score counts up
+            gsap.delayedCall(1.6, () => {
+                const badge = document.getElementById('highScoresBadge');
+                badge.style.display = 'block';
+                gsap.from(badge, {
+                    scale: 0.5, opacity: 0, duration: 0.45, ease: 'back.out(1.8)'
+                });
+            });
         }
-
-        // Update high scores display
-        this.updateHighScoresDisplay();
     }
 
-    updateGameStats() {
-        const gameState = this.game.gameState;
-        
+    _updateGameStats() {
+        const gs = this.game.gameState;
         storage.updateStats({
-            gamesPlayed: storage.getStats().gamesPlayed + 1,
-            totalScore: storage.getStats().totalScore + gameState.score,
-            enemiesDefeated: storage.getStats().enemiesDefeated + gameState.enemiesDefeated,
-            powerupsCollected: storage.getStats().powerupsCollected + gameState.powerupsCollected,
-            highestCombo: Math.max(storage.getStats().highestCombo, gameState.maxCombo)
+            gamesPlayed:       (storage.getStats().gamesPlayed || 0) + 1,
+            totalScore:        (storage.getStats().totalScore  || 0) + gs.score,
+            enemiesDefeated:   (storage.getStats().enemiesDefeated || 0) + (gs.enemiesDefeated || 0),
+            powerupsCollected: (storage.getStats().powerupsCollected || 0) + (gs.powerupsCollected || 0),
+            highestCombo:      Math.max(storage.getStats().highestCombo || 0, gs.maxCombo || 0)
         });
-
-        // Check for achievements
-        this.checkAchievements();
+        this._checkAchievements();
     }
 
-    checkAchievements() {
-        const gameState = this.game.gameState;
-        
-        // Check score achievements
-        if (gameState.score >= 1000) {
-            achievementManager.unlock('HIGH_SCORE_1000');
-        }
-        if (gameState.score >= 5000) {
-            achievementManager.unlock('HIGH_SCORE_5000');
-        }
-
-        // Check perfect round achievement
-        if (gameState.damageTaken === 0) {
-            achievementManager.unlock('PERFECT_ROUND');
-        }
+    _checkAchievements() {
+        const score = this.game.gameState.score;
+        if (score >= 1000) achievementManager.unlock('HIGH_SCORE_1000');
+        if (score >= 5000) achievementManager.unlock('HIGH_SCORE_5000');
+        if (this.game.gameState.damageTaken === 0) achievementManager.unlock('PERFECT_ROUND');
     }
 
-    showNewHighScoreEffect() {
-        const highScoreEffect = document.createElement('div');
-        highScoreEffect.className = 'new-high-score';
-        highScoreEffect.textContent = 'NEW HIGH SCORE!';
-        document.getElementById('gameOver').appendChild(highScoreEffect);
-    }
-
-    updateHighScoresDisplay() {
-        const highScores = storage.getHighScores();
-        const highScoresList = document.getElementById('highScores');
-        
-        if (highScoresList) {
-            highScoresList.innerHTML = highScores
-                .slice(0, 5)
-                .map((score, index) => `
-                    <li class="high-score-item">
-                        <span class="rank">#${index + 1}</span>
-                        <span class="score">${score.score}</span>
-                        <span class="date">${new Date(score.date).toLocaleDateString()}</span>
-                    </li>
-                `)
-                .join('');
-        }
-    }
-
-    addGameOverEffects() {
-        // Add slow-motion effect
+    _addEffects() {
         document.getElementById('gameContainer').classList.add('game-over-effect');
-
-        // Add screen darkening
         const overlay = document.createElement('div');
         overlay.className = 'game-over-overlay';
+        overlay.style.cssText = `
+            position: absolute; inset: 0; pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 40%, rgba(255,45,85,0.08) 100%);
+            z-index: 48;
+        `;
         document.getElementById('gameContainer').appendChild(overlay);
     }
 
-    cleanupEffects() {
+    _cleanupEffects() {
         document.getElementById('gameContainer').classList.remove('game-over-effect');
-        const overlay = document.querySelector('.game-over-overlay');
-        const highScoreEffect = document.querySelector('.new-high-score');
-        
-        if (overlay) overlay.remove();
-        if (highScoreEffect) highScoreEffect.remove();
+        document.querySelector('.game-over-overlay')?.remove();
+        gsap.killTweensOf('#gameoverTitle');
     }
 
     update() {
-        // Update any remaining explosions or effects
         if (this.game.gameState.explosions.length > 0) {
-            this.game.gameState.explosions = this.game.gameState.explosions.filter(explosion => {
-                explosion.update();
-                return !explosion.isComplete;
+            this.game.gameState.explosions = this.game.gameState.explosions.filter(ex => {
+                ex.update();
+                return !ex.isComplete;
             });
         }
     }
 
     render() {
-        // Keep rendering the final game state
         this.game.renderer.render(this.game.gameState, this.game.player);
-
-        // Add game over overlay effect
         const ctx = this.game.renderer.ctx;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     }
 }
