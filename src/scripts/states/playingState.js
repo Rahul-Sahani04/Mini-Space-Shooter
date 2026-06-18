@@ -161,39 +161,42 @@ export class PlayingState extends GameState {
             this.handlePlayerUpgrade();
         }
 
-        // Spawn enemies
-        // Difficulty Scaling
+        // Difficulty Scaling (logarithmic — much gentler than linear)
         const score = gameState.score || 0;
-        const difficultyMultiplier = 1 + (score / 1000); // +10% stats every 100 points
-        
-        // Dynamic spawn rate
-        const minSpawnInterval = 600;
-        const variableInterval = Math.max(
-            minSpawnInterval, 
-            GAME_CONFIG.ENEMY.SPAWN_INTERVAL - (score * 0.8) // Reduce interval by 0.8ms per point
-        );
-        gameState.spawnInterval = variableInterval;
+        const difficultyMultiplier = 1 + Math.log10(1 + score / 500) * 1.5;
 
-        // Spawn enemies
-        if (Date.now() - gameState.lastSpawnTime > gameState.spawnInterval) {
-            // Determine enemy type based on score
-            let type = Math.random() < 0.5 ? 'red' : 'green';
-            
-            // Introduce Chargers after 500 points
-            if (score > 500) {
-                // 20% chance for charger, increases slightly with difficulty
-                if (Math.random() < 0.2 + (score / 5000)) {
-                    type = 'charger';
+        // Check for milestone wave events
+        this.checkMilestone(gameState, difficultyMultiplier);
+
+        // Expire bullet time
+        if (gameState.bulletTimeActive && Date.now() > gameState.bulletTimeEndTime) {
+            gameState.bulletTimeActive = false;
+        }
+
+        if (gameState.waveEvent) {
+            // Wave event replaces normal spawning
+            this.updateWaveEvent(gameState, difficultyMultiplier);
+        } else {
+            // Milestone-gated spawn interval: breathing room between milestones
+            const milestone = Math.floor(score / GAME_CONFIG.ENEMY.MILESTONE_INTERVAL);
+            const base = Math.max(600, 2000 - milestone * 175);
+            gameState.spawnInterval = base + base * (0.25 / (1 + (score % GAME_CONFIG.ENEMY.MILESTONE_INTERVAL) * 0.001));
+
+            if (Date.now() - gameState.lastSpawnTime > gameState.spawnInterval) {
+                let type = Math.random() < 0.5 ? 'red' : 'green';
+
+                if (score > 500) {
+                    const chargerChance = Math.min(0.4, 0.1 + (score / 8000));
+                    if (Math.random() < chargerChance) type = 'charger';
                 }
-            }
+                if (score > 2000 && Math.random() < 0.10) {
+                    type = 'bomber';
+                }
 
-            const enemy = new Enemy(
-                this.game,
-                type,
-                difficultyMultiplier
-            );
-            gameState.enemies.push(enemy);
-            gameState.lastSpawnTime = Date.now();
+                const enemy = new Enemy(this.game, type, difficultyMultiplier);
+                gameState.enemies.push(enemy);
+                gameState.lastSpawnTime = Date.now();
+            }
         }
 
         // Update player
@@ -208,12 +211,12 @@ export class PlayingState extends GameState {
 
         // Update projectiles
         gameState.projectiles = gameState.projectiles.filter(projectile => {
-            projectile.update();
+            projectile.update(gameState);
             return projectile.active;
         });
 
         // --- PROJECTILE COLLISION LOGIC ---
-        // Player projectiles hit enemies
+        const player = this.game.player;
         gameState.projectiles.forEach(projectile => {
             if (projectile.type === 'player') {
                 gameState.enemies.forEach(enemy => {
@@ -223,20 +226,30 @@ export class PlayingState extends GameState {
                     }
                 });
             }
-            // Enemy projectiles hit player
+            // Enemy projectiles hit player — also check for close calls
             if (projectile.type === 'enemy') {
-                if (
-                    projectile.active &&
-                    checkCollision(projectile, this.game.player)
-                ) {
+                if (projectile.active && checkCollision(projectile, player)) {
                     projectile.active = false;
-                    this.game.player.takeDamage(GAME_CONFIG.ENEMY.DAMAGE, gameState);
+                    player.takeDamage(GAME_CONFIG.ENEMY.DAMAGE, gameState);
+                } else if (projectile.active && !projectile._closeCallChecked && player) {
+                    const dist = Math.hypot(projectile.x - player.x, projectile.y - player.y);
+                    // 20px gap outside the player hitbox (~27px half-size)
+                    if (dist < 47 && dist > 27) {
+                        projectile._closeCallChecked = true;
+                        gameState.score += 50;
+                        const scoreElem = document.getElementById('score');
+                        if (scoreElem) scoreElem.textContent = gameState.score;
+                        this._showCloseCallText(projectile.x, projectile.y);
+                    }
                 }
             }
         });
 
         // Update powerups
-        gameState.powerups = gameState.powerups.filter(powerup => {
+        // Keep a reference to detect powerups pushed mid-filter (e.g., nova bomb enemy drops)
+        const _pwRef = gameState.powerups;
+        const _pwStartLen = _pwRef.length;
+        gameState.powerups = _pwRef.filter(powerup => {
             powerup.update();
             if (checkCollision(powerup, this.game.player)) {
                 powerup.applyEffect(gameState, this.game.player);
@@ -244,6 +257,10 @@ export class PlayingState extends GameState {
             }
             return powerup.y < this.game.renderer.canvas.height + 32;
         });
+        // Append any powerups pushed during filter (nova bomb drops, etc.)
+        for (let i = _pwStartLen; i < _pwRef.length; i++) {
+            gameState.powerups.push(_pwRef[i]);
+        }
 
         // Update explosions
         gameState.explosions = gameState.explosions.filter(explosion => {
@@ -316,9 +333,120 @@ export class PlayingState extends GameState {
 
     cleanupEffects() {
         const effects = document.querySelectorAll(
-            '.damage-number, .powerup-collection, .hit-effect, .upgrade-notification'
+            '.damage-number, .powerup-collection, .hit-effect, .upgrade-notification, .wave-announcement, .close-call-text, .nova-flash'
         );
         effects.forEach(effect => effect.remove());
+    }
+
+    checkMilestone(gameState, difficultyMultiplier) {
+        if (gameState.score < GAME_CONFIG.ENEMY.MILESTONE_INTERVAL) return;
+        const currentMilestone = Math.floor(gameState.score / GAME_CONFIG.ENEMY.MILESTONE_INTERVAL);
+        if (currentMilestone <= gameState.lastMilestone || gameState.waveEvent !== null || this._upgradePicker) return;
+
+        gameState.lastMilestone = currentMilestone;
+        const types = ['rush', 'elite', 'formation'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        gameState.waveEvent = {
+            type,
+            startTime: Date.now(),
+            endTime: Date.now() + GAME_CONFIG.WAVE.DURATION_MS,
+            spawned: 0,
+            eliteSpawned: false,
+            formationSpawned: false,
+            eliteEnemy: null,
+        };
+        gameState.lastSpawnTime = Date.now();
+        this._showWaveAnnouncement(type);
+    }
+
+    updateWaveEvent(gameState, difficultyMultiplier) {
+        const wave = gameState.waveEvent;
+        const now = Date.now();
+
+        if (now > wave.endTime) {
+            gameState.waveEvent = null;
+            gameState.lastSpawnTime = Date.now();
+            return;
+        }
+
+        if (wave.type === 'rush') {
+            const elapsed = now - wave.startTime;
+            const expectedSpawns = Math.floor(elapsed / GAME_CONFIG.WAVE.RUSH_INTERVAL_MS);
+            if (expectedSpawns > wave.spawned && wave.spawned < GAME_CONFIG.WAVE.RUSH_COUNT) {
+                const type = Math.random() < 0.5 ? 'red' : 'green';
+                gameState.enemies.push(new Enemy(this.game, type, difficultyMultiplier));
+                wave.spawned++;
+            }
+            if (wave.spawned >= GAME_CONFIG.WAVE.RUSH_COUNT && now > wave.startTime + 4000) {
+                gameState.waveEvent = null;
+                gameState.lastSpawnTime = Date.now();
+            }
+        } else if (wave.type === 'elite') {
+            if (!wave.eliteSpawned) {
+                const elite = new Enemy(this.game, 'charger', difficultyMultiplier * 2.5);
+                gameState.enemies.push(elite);
+                wave.eliteEnemy = elite;
+                wave.eliteSpawned = true;
+            }
+            if (wave.eliteEnemy && wave.eliteEnemy.dead) {
+                gameState.waveEvent = null;
+                gameState.lastSpawnTime = Date.now();
+            }
+        } else if (wave.type === 'formation') {
+            if (!wave.formationSpawned) {
+                const canvas = this.game.renderer.canvas;
+                const cx = canvas.width / 2;
+                const positions = [
+                    { x: cx,       y: -40 },
+                    { x: cx - 60,  y: -80 },
+                    { x: cx + 60,  y: -80 },
+                    { x: cx - 120, y: -120 },
+                    { x: cx + 120, y: -120 },
+                ];
+                positions.forEach(pos => {
+                    const enemy = new Enemy(this.game, 'red', difficultyMultiplier);
+                    enemy.x = pos.x;
+                    enemy.y = pos.y;
+                    gameState.enemies.push(enemy);
+                });
+                wave.formationSpawned = true;
+            }
+        }
+    }
+
+    _showWaveAnnouncement(type) {
+        const labels = {
+            rush: 'ENEMY RUSH!',
+            elite: 'ELITE ENCOUNTERED!',
+            formation: 'FORMATION INCOMING!',
+        };
+        const colors = {
+            rush: '#f44',
+            elite: '#c0f',
+            formation: '#ff0',
+        };
+        const el = document.createElement('div');
+        el.className = 'wave-announcement';
+        el.textContent = labels[type] || 'INCOMING!';
+        el.style.color = colors[type] || '#fff';
+        document.getElementById('gameContainer').appendChild(el);
+
+        gsap.timeline({ onComplete: () => el.remove() })
+            .from(el, { y: -50, opacity: 0, duration: 0.4, ease: 'back.out(1.5)' })
+            .to(el, { opacity: 0, duration: 0.4, delay: 2.0 });
+    }
+
+    _showCloseCallText(x, y) {
+        const el = document.createElement('div');
+        el.className = 'close-call-text';
+        el.textContent = 'CLOSE CALL! +50';
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        document.getElementById('gameContainer').appendChild(el);
+
+        gsap.timeline({ onComplete: () => el.remove() })
+            .from(el, { opacity: 0, scale: 0.7, duration: 0.2, ease: 'back.out(2)' })
+            .to(el, { y: -50, opacity: 0, duration: 0.6, delay: 0.4 });
     }
 
     render() {
@@ -326,5 +454,36 @@ export class PlayingState extends GameState {
         particleSystem.draw(this.game.renderer.ctx);
     }
 }
+
+// Inject styles for wave announcements and close call bonus
+const _playingStyles = document.createElement('style');
+_playingStyles.textContent = `
+    .wave-announcement {
+        position: absolute;
+        top: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 22px;
+        font-weight: bold;
+        letter-spacing: 3px;
+        text-shadow: 0 0 12px currentColor;
+        pointer-events: none;
+        white-space: nowrap;
+        z-index: 50;
+    }
+
+    .close-call-text {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        color: #ff0;
+        font-weight: bold;
+        font-size: 13px;
+        pointer-events: none;
+        text-shadow: 0 0 8px #f80;
+        white-space: nowrap;
+        z-index: 50;
+    }
+`;
+document.head.appendChild(_playingStyles);
 
 export default PlayingState;

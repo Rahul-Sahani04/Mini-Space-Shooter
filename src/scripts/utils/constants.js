@@ -27,6 +27,7 @@ export const GAME_CONFIG = {
         DAMAGE: 15, // Enemy projectile damage
         SHOOT_CHANCE: 0.01,
         SPAWN_INTERVAL: 2000,
+        MILESTONE_INTERVAL: 1500,
     },
 
     CHARGER: {
@@ -35,6 +36,22 @@ export const GAME_CONFIG = {
         DAMAGE: 20,
         SIZE: 40,
         COLOR: '#ff00ff', // Visual distinction if no sprite
+    },
+
+    WEAVER: {
+        SPEED: 3,
+        HEALTH: 25,
+        SIZE: 40,
+        AMPLITUDE: 80,
+        FREQUENCY: 0.04,
+    },
+
+    BOMBER: {
+        SPEED: 1.2,
+        HEALTH: 120,
+        SIZE: 56,
+        AOE_RADIUS: 100,
+        AOE_DAMAGE: 40,
     },
 
     PROJECTILE: {
@@ -53,7 +70,17 @@ export const GAME_CONFIG = {
         HEALTH_RESTORE: 30,
         SHIELD_RESTORE: 50,
         ENERGY_RESTORE: 100,
-        MULTISHOT_DURATION: 10000, // 10 seconds
+        MULTISHOT_DURATION: 10000,
+        NOVA_BOMB_FLASH_DURATION: 300,
+        BULLET_TIME_DURATION: 5000,
+        BULLET_TIME_SPEED_FACTOR: 0.3,
+    },
+
+    WAVE: {
+        DURATION_MS: 12000,
+        RUSH_COUNT: 6,
+        RUSH_INTERVAL_MS: 500,
+        FORMATION_COUNT: 5,
     },
 
     COMBO: {
@@ -94,7 +121,12 @@ export const ASSETS = {
              '/assets/PixelSpaceRage/128px/Enemy01_Red_Frame_1_png_processed.png',
              '/assets/PixelSpaceRage/128px/Enemy01_Red_Frame_2_png_processed.png',
              '/assets/PixelSpaceRage/128px/Enemy01_Red_Frame_3_png_processed.png',
-        ]
+        ],
+        bomber: [
+             '/assets/PixelSpaceRage/128px/Enemy01_Red_Frame_1_png_processed.png',
+             '/assets/PixelSpaceRage/128px/Enemy01_Red_Frame_2_png_processed.png',
+             '/assets/PixelSpaceRage/128px/Enemy01_Red_Frame_3_png_processed.png',
+        ],
     },
     explosions: Array.from(
         { length: 9 },
@@ -105,6 +137,8 @@ export const ASSETS = {
         shield: '/assets/PixelSpaceRage/128px/Powerup_Shields_png_processed.png',
         ammo: '/assets/PixelSpaceRage/128px/Powerup_Ammo_png_processed.png',
         multishot: '/assets/PixelSpaceRage/128px/Powerup_Ammo_png_processed.png',
+        novabomb: '/assets/PixelSpaceRage/128px/Powerup_Health_png_processed.png',
+        bullettime: '/assets/PixelSpaceRage/128px/Powerup_Shields_png_processed.png',
     },
     projectiles: {
         laser: '/assets/PixelSpaceRage/128px/Laser_Small_png_processed.png',
@@ -128,6 +162,8 @@ export const COLORS = {
     AMMO: '#f44',
     COMBO: '#f4f',
     MULTISHOT: '#ff0',
+    NOVABOMB: '#fff',
+    BULLETTIME: '#4af',
 };
 
 // Tutorial steps
@@ -182,7 +218,11 @@ export const INITIAL_GAME_STATE = {
     lastComboTime: 0,
     comboCount: 0,
     comboTimeout: GAME_CONFIG.COMBO.TIMEOUT,
-    
+    lastMilestone: 0,
+    waveEvent: null,
+    bulletTimeActive: false,
+    bulletTimeEndTime: 0,
+
     // Upgrade System
     playerLevel: 1,
     nextUpgradeScore: GAME_CONFIG.PLAYER.UPGRADE_THRESHOLD,

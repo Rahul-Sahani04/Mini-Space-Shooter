@@ -120,6 +120,9 @@ export class GameRenderer {
             case 'health': return '#4f4';
             case 'shield': return '#44f';
             case 'ammo': return '#f44';
+            case 'multishot': return '#ff0';
+            case 'novabomb': return '#fff';
+            case 'bullettime': return '#4af';
             default: return '#fff';
         }
     }
@@ -133,6 +136,15 @@ export class GameRenderer {
         }
     }
 
+    drawBulletTimeOverlay(gameState) {
+        if (!gameState.bulletTimeActive) return;
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.08;
+        this.ctx.fillStyle = '#4af';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.restore();
+    }
+
     render(gameState, player, stars) {
         this.clear();
 
@@ -143,11 +155,14 @@ export class GameRenderer {
         gameState.projectiles.forEach(p => this.drawProjectile(p));
         gameState.enemies.forEach(e => this.drawEnemy(e));
         gameState.explosions.forEach(e => this.drawExplosion(e));
-        
+
         // Draw player last so it appears on top
         if (player) {
             this.drawPlayer(player);
         }
+
+        // Bullet time tint
+        this.drawBulletTimeOverlay(gameState);
 
         // Draw UI elements
         this.drawUI(gameState);

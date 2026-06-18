@@ -27,10 +27,12 @@ export class Projectile {
         );
     }
 
-    update() {
-        this.y += Math.cos(this.angle) * this.speed;
-        this.x += Math.sin(this.angle) * Math.abs(this.speed);
-        
+    update(gameState) {
+        const slowFactor = (gameState && gameState.bulletTimeActive && this.type === 'enemy')
+            ? GAME_CONFIG.POWERUP.BULLET_TIME_SPEED_FACTOR : 1;
+        this.y += Math.cos(this.angle) * this.speed * slowFactor;
+        this.x += Math.sin(this.angle) * Math.abs(this.speed) * slowFactor;
+
         // Check if projectile is off screen
         if (this.y < -this.height || this.y > this.canvas.height + this.height ||
             this.x < -this.width || this.x > this.canvas.width + this.width) {

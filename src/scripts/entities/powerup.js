@@ -77,6 +77,8 @@ export class PowerUp {
             case 'shield': return COLORS.SHIELD;
             case 'ammo': return COLORS.AMMO;
             case 'multishot': return COLORS.MULTISHOT;
+            case 'novabomb': return COLORS.NOVABOMB;
+            case 'bullettime': return COLORS.BULLETTIME;
             default: return '#fff';
         }
     }
@@ -84,19 +86,27 @@ export class PowerUp {
     applyEffect(gameState, player) {
         switch(this.type) {
             case 'health':
-                gameState.health = Math.min(100, gameState.health + GAME_CONFIG.POWERUP.HEALTH_RESTORE);
+                gameState.health = Math.min(gameState.stats.maxHealth, gameState.health + GAME_CONFIG.POWERUP.HEALTH_RESTORE);
                 break;
             case 'shield':
-                gameState.health = Math.min(150, gameState.health + GAME_CONFIG.POWERUP.SHIELD_RESTORE);
+                gameState.health = Math.min(gameState.stats.maxHealth + 50, gameState.health + GAME_CONFIG.POWERUP.SHIELD_RESTORE);
                 break;
             case 'ammo':
-                gameState.energy = Math.min(200, gameState.energy + GAME_CONFIG.POWERUP.ENERGY_RESTORE);
+                gameState.energy = Math.min(gameState.stats.maxEnergy, gameState.energy + GAME_CONFIG.POWERUP.ENERGY_RESTORE);
                 break;
             case 'multishot':
                 if (player) {
                     player.multiShotActive = true;
                     player.multiShotTimer = GAME_CONFIG.POWERUP.MULTISHOT_DURATION;
                 }
+                break;
+            case 'novabomb':
+                gameState.enemies.forEach(e => e.takeDamage(999, gameState));
+                this._showNovaFlash();
+                break;
+            case 'bullettime':
+                gameState.bulletTimeActive = true;
+                gameState.bulletTimeEndTime = Date.now() + GAME_CONFIG.POWERUP.BULLET_TIME_DURATION;
                 break;
         }
 
@@ -145,8 +155,17 @@ export class PowerUp {
             case 'shield': return `+${GAME_CONFIG.POWERUP.SHIELD_RESTORE} SHIELD`;
             case 'ammo': return `+${GAME_CONFIG.POWERUP.ENERGY_RESTORE} ENERGY`;
             case 'multishot': return 'MULTI-SHOT!';
+            case 'novabomb': return 'NOVA BOMB!';
+            case 'bullettime': return 'BULLET TIME!';
             default: return '';
         }
+    }
+
+    _showNovaFlash() {
+        const flash = document.createElement('div');
+        flash.className = 'nova-flash';
+        document.getElementById('gameContainer').appendChild(flash);
+        setTimeout(() => flash.remove(), GAME_CONFIG.POWERUP.NOVA_BOMB_FLASH_DURATION);
     }
 
     createParticleBurst() {
@@ -177,6 +196,20 @@ export class PowerUp {
 // Add powerup effect styles
 const style = document.createElement('style');
 style.textContent = `
+    .nova-flash {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(255, 255, 255, 0.85);
+        pointer-events: none;
+        animation: nova-fade 0.3s ease-out forwards;
+        z-index: 100;
+    }
+
+    @keyframes nova-fade {
+        0% { opacity: 1; }
+        100% { opacity: 0; }
+    }
+
     .powerup-collection {
         position: absolute;
         transform: translate(-50%, -50%);
