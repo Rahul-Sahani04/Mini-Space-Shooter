@@ -13,7 +13,9 @@ export const GAME_CONFIG = {
         ENERGY_REGEN: 0.4,
         SHOOT_COST: 10,
         SHOOT_COOLDOWN: 15,
-        UPGRADE_THRESHOLD: 1000,
+        // Score gap added per level-up. Index = (new level - 1), clamped to last.
+        // Fast early upgrades that progressively slow, capping at a 4000-point gap.
+        UPGRADE_STEPS: [250, 500, 750, 1000, 1500, 2000, 3000, 4000],
         MAX_LEVEL: 20,
     },
 
@@ -27,7 +29,7 @@ export const GAME_CONFIG = {
         DAMAGE: 15, // Enemy projectile damage
         SHOOT_CHANCE: 0.01,
         SPAWN_INTERVAL: 2000,
-        MILESTONE_INTERVAL: 1500,
+        MILESTONE_INTERVAL: 1000,
     },
 
     CHARGER: {
@@ -225,7 +227,7 @@ export const INITIAL_GAME_STATE = {
 
     // Upgrade System
     playerLevel: 1,
-    nextUpgradeScore: GAME_CONFIG.PLAYER.UPGRADE_THRESHOLD,
+    nextUpgradeScore: GAME_CONFIG.PLAYER.UPGRADE_STEPS[0],
     stats: {
         damage:             GAME_CONFIG.PLAYER.DAMAGE,
         fireRate:           GAME_CONFIG.PLAYER.SHOOT_COOLDOWN,

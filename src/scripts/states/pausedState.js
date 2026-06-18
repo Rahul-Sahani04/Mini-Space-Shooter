@@ -84,7 +84,7 @@ export class PausedState extends GameState {
             scale: 0.88, opacity: 0, duration: 0.22, ease: 'power2.in',
             onComplete: () => {
                 this._resumeSounds();
-                this.game.setState(new PlayingState(this.game));
+                this.game.setState(new PlayingState(this.game, { resume: true }));
             }
         });
     }

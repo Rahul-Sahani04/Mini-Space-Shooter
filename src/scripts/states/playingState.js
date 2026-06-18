@@ -13,7 +13,24 @@ import particleSystem from '../utils/particles.js';
 import { checkCollision } from '../utils/collision.js';
 
 export class PlayingState extends GameState {
+    constructor(game, { resume = false } = {}) {
+        super(game);
+        this._resume = resume;
+    }
+
     enter() {
+        // Resuming from pause: keep existing gameState, player, upgrades and
+        // input handlers intact. Only the background music needs restarting.
+        if (this._resume) {
+            const bgMusic = this.game.assetManager.getAudio('bgMusic');
+            if (bgMusic) {
+                bgMusic.volume = 0.2;
+                bgMusic.loop = true;
+                bgMusic.play().catch(err => console.warn('Game music autoplay prevented:', err));
+            }
+            return;
+        }
+
         // Initialize game entities
         this.game.player = new Player(this.game.assetManager);
         this.game.tutorial = new TutorialSystem(this.game);
@@ -185,11 +202,11 @@ export class PlayingState extends GameState {
             if (Date.now() - gameState.lastSpawnTime > gameState.spawnInterval) {
                 let type = Math.random() < 0.5 ? 'red' : 'green';
 
-                if (score > 500) {
-                    const chargerChance = Math.min(0.4, 0.1 + (score / 8000));
+                if (score > 300) {
+                    const chargerChance = Math.min(0.45, 0.1 + (score / 7000));
                     if (Math.random() < chargerChance) type = 'charger';
                 }
-                if (score > 2000 && Math.random() < 0.10) {
+                if (score > 1200 && Math.random() < 0.10) {
                     type = 'bomber';
                 }
 
@@ -299,8 +316,10 @@ export class PlayingState extends GameState {
     handlePlayerUpgrade() {
         const gameState = this.game.gameState;
 
-        gameState.nextUpgradeScore += GAME_CONFIG.PLAYER.UPGRADE_THRESHOLD;
         gameState.playerLevel++;
+        const steps = GAME_CONFIG.PLAYER.UPGRADE_STEPS;
+        const stepIdx = Math.min(gameState.playerLevel - 1, steps.length - 1);
+        gameState.nextUpgradeScore += steps[stepIdx];
 
         const levelEl = document.getElementById('levelDisplay');
         if (levelEl) {
@@ -370,14 +389,16 @@ export class PlayingState extends GameState {
         }
 
         if (wave.type === 'rush') {
+            const rushCount = GAME_CONFIG.WAVE.RUSH_COUNT + Math.min(8, Math.floor(gameState.playerLevel / 2));
             const elapsed = now - wave.startTime;
             const expectedSpawns = Math.floor(elapsed / GAME_CONFIG.WAVE.RUSH_INTERVAL_MS);
-            if (expectedSpawns > wave.spawned && wave.spawned < GAME_CONFIG.WAVE.RUSH_COUNT) {
-                const type = Math.random() < 0.5 ? 'red' : 'green';
+            if (expectedSpawns > wave.spawned && wave.spawned < rushCount) {
+                const r = Math.random();
+                const type = (gameState.score > 300 && r < 0.2) ? 'charger' : (r < 0.6 ? 'red' : 'green');
                 gameState.enemies.push(new Enemy(this.game, type, difficultyMultiplier));
                 wave.spawned++;
             }
-            if (wave.spawned >= GAME_CONFIG.WAVE.RUSH_COUNT && now > wave.startTime + 4000) {
+            if (wave.spawned >= rushCount && now > wave.startTime + 4000) {
                 gameState.waveEvent = null;
                 gameState.lastSpawnTime = Date.now();
             }
@@ -403,6 +424,14 @@ export class PlayingState extends GameState {
                     { x: cx - 120, y: -120 },
                     { x: cx + 120, y: -120 },
                 ];
+                // Wider pyramid as the player levels up: +2 ships per extra row, up to +6.
+                const extraRows = Math.min(3, Math.floor(gameState.playerLevel / 3));
+                for (let i = 1; i <= extraRows; i++) {
+                    const offset = 120 + i * 60;
+                    const y = -120 - i * 40;
+                    positions.push({ x: cx - offset, y });
+                    positions.push({ x: cx + offset, y });
+                }
                 positions.forEach(pos => {
                     const enemy = new Enemy(this.game, 'red', difficultyMultiplier);
                     enemy.x = pos.x;
